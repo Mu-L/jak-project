@@ -9,10 +9,6 @@
 
 (deftype ctyport-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 
@@ -32,7 +28,7 @@
   )
 
 (defpart 4148
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -2) (meters 4))
     (:y (meters -1.5) 3 (meters 1.5))
@@ -75,7 +71,7 @@
   )
 
 (defpart 4150
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 3.0 1.0)
     (:x (meters -0.1) 9829 (meters 0.00024414062))
     (:y (meters 0.6) (meters 0.7))
@@ -105,7 +101,7 @@
   )
 
 (defpart 4151
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 3.0 1.0)
     (:x (meters -1.2) 9829 (meters 0.00024414062))
     (:y (meters 0.6) (meters 0.7))
@@ -135,7 +131,7 @@
   )
 
 (defpart 4152
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 3.0 1.0)
     (:x (meters -2.3) 9829 (meters 0.00024414062))
     (:y (meters 0.6) (meters 0.7))
@@ -178,7 +174,7 @@
   )
 
 (defpart 4156
-  :init-specs ((:texture (new 'static 'texture-id :page #x52d))
+  :init-specs ((:texture (ctyport-muddrop ctyport-sprite))
     (:num 3.0 1.0)
     (:x (meters -0.05) (meters 0.1))
     (:y (meters -0.05) (meters 0.1))
@@ -219,30 +215,9 @@
     (let ((s3-0 (new 'stack-no-clear 'vector)))
       (sp-kill-particle arg0 arg1)
       (set-vector! s3-0 (-> arg2 vector 0 x) (-> arg1 user-float) (-> arg2 vector 0 z) 1.0)
-      (let ((t9-1 sp-launch-particles-var)
-            (a0-3 *sp-particle-system-2d*)
-            (a1-2 (-> *part-id-table* 4159))
-            (a2-1 *launch-matrix*)
-            )
-        (set! (-> a2-1 trans quad) (-> s3-0 quad))
-        (t9-1 a0-3 a1-2 a2-1 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-2 sp-launch-particles-var)
-            (a0-4 *sp-particle-system-2d*)
-            (a1-3 (-> *part-id-table* 4160))
-            (a2-2 *launch-matrix*)
-            )
-        (set! (-> a2-2 trans quad) (-> s3-0 quad))
-        (t9-2 a0-4 a1-3 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-3 sp-launch-particles-var)
-            (a0-5 *sp-particle-system-3d*)
-            (a1-4 (-> *part-id-table* 4161))
-            (a2-3 *launch-matrix*)
-            )
-        (set! (-> a2-3 trans quad) (-> s3-0 quad))
-        (t9-3 a0-5 a1-4 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
+      (launch-particles (-> *part-id-table* 4159) s3-0)
+      (launch-particles (-> *part-id-table* 4160) s3-0)
+      (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 4161) s3-0)
       )
     )
   (sparticle-motion-blur arg0 arg1 (the-as vector arg2))
@@ -250,7 +225,7 @@
   )
 
 (defpart 4154
-  :init-specs ((:texture (new 'static 'texture-id :page #x52d))
+  :init-specs ((:texture (ctyport-muddrop ctyport-sprite))
     (:num 1.0)
     (:x (meters -0.05) (meters 0.1))
     (:y (meters -0.05) (meters 0.1))
@@ -279,7 +254,7 @@
   )
 
 (defpart 4155
-  :init-specs ((:texture (new 'static 'texture-id :page #x52d))
+  :init-specs ((:texture (ctyport-muddrop ctyport-sprite))
     (:num 0.0 0.5)
     (:z (meters -0.5))
     (:scale-x (meters 0.35) (meters 0.1))
@@ -306,7 +281,7 @@
   )
 
 (defpart 4159
-  :init-specs ((:texture (new 'static 'texture-id :page #x52d))
+  :init-specs ((:texture (ctyport-muddrop ctyport-sprite))
     (:num 1.0 1.0)
     (:scale-x (meters 0.25) (meters 0.1))
     (:rot-x 4)
@@ -331,7 +306,7 @@
   )
 
 (defpart 4160
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -2) (meters 4))
     (:y (meters 0.25) (meters 0.75))
@@ -360,7 +335,7 @@
   )
 
 (defpart 4161
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #xc))
+  :init-specs ((:texture (water-ring effects))
     (:num 1.0)
     (:y (meters -0.2))
     (:scale-x (meters 1) (meters 0.5))
@@ -389,7 +364,7 @@
   )
 
 (defpart 4164
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 24) (meters 1.1))
@@ -407,7 +382,7 @@
   )
 
 (defpart 4163
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:birth-func 'birth-func-texture-group)
     (:num 0.0 0.5)
     (:scale-x (meters 2) (meters 1))
@@ -474,7 +449,7 @@
   )
 
 (defpart 4169
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:birth-func 'birth-func-texture-group)
     (:num 0.0 0.5)
     (:scale-x (meters 2) (meters 1))
@@ -525,7 +500,7 @@
   )
 
 (defpart 4172
-  :init-specs ((:texture (new 'static 'texture-id :page #x52d))
+  :init-specs ((:texture (ctyport-muddrop ctyport-sprite))
     (:num 0.1)
     (:y (meters 0.3))
     (:z (meters -0.45))
@@ -560,7 +535,7 @@
   )
 
 (defpart 4174
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 12))
@@ -607,7 +582,7 @@
   )
 
 (defpart 4177
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 8))
@@ -683,7 +658,7 @@
   )
 
 (defpart 4179
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 5))
     (:rot-x (degrees 11.25))
@@ -770,7 +745,7 @@
   )
 
 (defpart 4183
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 5))
     (:rot-x (degrees 11.25))
@@ -799,7 +774,7 @@
   )
 
 (defpart 4184
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 1.2) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -816,7 +791,7 @@
   )
 
 (defpart 4185
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 7) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -840,7 +815,7 @@
   )
 
 (defpart 4186
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.05))
     (:scale-x (meters 1.4) (meters 0.1))
@@ -858,7 +833,7 @@
   )
 
 (defpart 4187
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 7) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -889,7 +864,7 @@
   )
 
 (defpart 4188
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters 1.5))
     (:scale-x (meters 1.5) (meters 0.1))
@@ -908,7 +883,7 @@
   )
 
 (defpart 4189
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters 1.5))
     (:scale-x (meters 8) (meters 0.1))
@@ -927,7 +902,7 @@
   )
 
 (defpart 4190
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 1.5) (meters 0.1))
     (:rot-x (degrees 2.25))
@@ -945,7 +920,7 @@
   )
 
 (defpart 4191
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 8) (meters 0.1))
     (:rot-x (degrees 2.25))
@@ -963,7 +938,7 @@
   )
 
 (defpart 4192
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters -1.5))
     (:scale-x (meters 1.5) (meters 0.1))
@@ -982,7 +957,7 @@
   )
 
 (defpart 4193
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters -1.5))
     (:scale-x (meters 8) (meters 0.1))
@@ -1008,7 +983,7 @@
   )
 
 (defpart 4194
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.4))
     (:scale-x (meters 1.5) (meters 0.1))
@@ -1026,7 +1001,7 @@
   )
 
 (defpart 4195
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.05))
     (:scale-x (meters 6.5) (meters 0.1))
@@ -1051,7 +1026,7 @@
   )
 
 (defpart 4196
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.1))
     (:scale-x (meters 1) (meters 0.1))
@@ -1069,7 +1044,7 @@
   )
 
 (defpart 4197
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.01))
     (:scale-x (meters 4.3) (meters 0.1))
@@ -1098,7 +1073,7 @@
   )
 
 (defpart 4200
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 48) (meters 0.1))
@@ -1116,7 +1091,7 @@
   )
 
 (defpart 4198
-  :init-specs ((:texture (new 'static 'texture-id :index #x1b :page #x52d))
+  :init-specs ((:texture (sign-hiphog-exterior-krew ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.05))
     (:scale-x (meters 8))
@@ -1138,7 +1113,7 @@
   )
 
 (defpart 4199
-  :init-specs ((:texture (new 'static 'texture-id :index #x1b :page #x52d))
+  :init-specs ((:texture (sign-hiphog-exterior-krew ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.05))
     (:scale-x (meters 8))
@@ -1171,7 +1146,7 @@
   )
 
 (defpart 4203
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 32) (meters 0.1))
@@ -1189,7 +1164,7 @@
   )
 
 (defpart 4201
-  :init-specs ((:texture (new 'static 'texture-id :index #x5 :page #x52d))
+  :init-specs ((:texture (sign-hiphog ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.05))
     (:scale-x (meters 8))
@@ -1211,7 +1186,7 @@
   )
 
 (defpart 4202
-  :init-specs ((:texture (new 'static 'texture-id :index #x5 :page #x52d))
+  :init-specs ((:texture (sign-hiphog ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.05))
     (:scale-x (meters 8))
@@ -1244,7 +1219,7 @@
   )
 
 (defpart 4204
-  :init-specs ((:texture (new 'static 'texture-id :index #x1 :page #x52d))
+  :init-specs ((:texture (sign-blank ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.05))
     (:scale-x (meters 8))
@@ -1266,7 +1241,7 @@
   )
 
 (defpart 4205
-  :init-specs ((:texture (new 'static 'texture-id :index #x1 :page #x52d))
+  :init-specs ((:texture (sign-blank ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.05))
     (:scale-x (meters 8))
@@ -1299,7 +1274,7 @@
   )
 
 (defpart 4206
-  :init-specs ((:texture (new 'static 'texture-id :index #x11 :page #x52d))
+  :init-specs ((:texture (sign-vert-right-arrow ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.05))
     (:scale-x (meters 8))
@@ -1321,7 +1296,7 @@
   )
 
 (defpart 4207
-  :init-specs ((:texture (new 'static 'texture-id :index #x11 :page #x52d))
+  :init-specs ((:texture (sign-vert-right-arrow ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.05))
     (:scale-x (meters 8))
@@ -1354,7 +1329,7 @@
   )
 
 (defpart 4208
-  :init-specs ((:texture (new 'static 'texture-id :index #x19 :page #x52d))
+  :init-specs ((:texture (sign-hiphog-exterior-chick ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.05))
     (:scale-x (meters 8))
@@ -1376,7 +1351,7 @@
   )
 
 (defpart 4209
-  :init-specs ((:texture (new 'static 'texture-id :index #x19 :page #x52d))
+  :init-specs ((:texture (sign-hiphog-exterior-chick ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.05))
     (:scale-x (meters 8))
@@ -1409,7 +1384,7 @@
   )
 
 (defpart 4212
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 32) (meters 0.1))
@@ -1428,7 +1403,7 @@
   )
 
 (defpart 4210
-  :init-specs ((:texture (new 'static 'texture-id :index #xb :page #x52d))
+  :init-specs ((:texture (sign-loading-left ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -1450,7 +1425,7 @@
   )
 
 (defpart 4211
-  :init-specs ((:texture (new 'static 'texture-id :index #xb :page #x52d))
+  :init-specs ((:texture (sign-loading-left ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -1483,7 +1458,7 @@
   )
 
 (defpart 4213
-  :init-specs ((:texture (new 'static 'texture-id :index #x7 :page #x52d))
+  :init-specs ((:texture (sign-holding-right ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -1505,7 +1480,7 @@
   )
 
 (defpart 4214
-  :init-specs ((:texture (new 'static 'texture-id :index #x7 :page #x52d))
+  :init-specs ((:texture (sign-holding-right ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -1538,7 +1513,7 @@
   )
 
 (defpart 4215
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x52d))
+  :init-specs ((:texture (sign-arrows ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -1560,7 +1535,7 @@
   )
 
 (defpart 4216
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x52d))
+  :init-specs ((:texture (sign-arrows ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -1593,7 +1568,7 @@
   )
 
 (defpart 4217
-  :init-specs ((:texture (new 'static 'texture-id :index #x9 :page #x52d))
+  :init-specs ((:texture (sign-krew-international ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -1615,7 +1590,7 @@
   )
 
 (defpart 4218
-  :init-specs ((:texture (new 'static 'texture-id :index #x9 :page #x52d))
+  :init-specs ((:texture (sign-krew-international ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -1648,7 +1623,7 @@
   )
 
 (defpart 4219
-  :init-specs ((:texture (new 'static 'texture-id :index #xd :page #x52d))
+  :init-specs ((:texture (sign-no-unloading ctyport-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -1670,7 +1645,7 @@
   )
 
 (defpart 4220
-  :init-specs ((:texture (new 'static 'texture-id :index #xd :page #x52d))
+  :init-specs ((:texture (sign-no-unloading ctyport-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -1701,7 +1676,7 @@
   )
 
 (defpart 4222
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters -1))
     (:scale-x (meters 28) (meters 0.1))
@@ -1719,7 +1694,7 @@
   )
 
 (defpart 4221
-  :init-specs ((:texture (new 'static 'texture-id :index #x15 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-neon-off ctyport-sprite))
     (:num 1.0)
     (:y (meters -1))
     (:z (meters 0.25))
@@ -1739,7 +1714,7 @@
   )
 
 (defpart 11
-  :init-specs ((:texture (new 'static 'texture-id :index #x16 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-neon-on ctyport-sprite))
     (:num 1.0)
     (:y (meters -1))
     (:z (meters 0.25))
@@ -1768,7 +1743,7 @@
   )
 
 (defpart 4225
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters -1))
     (:scale-x (meters 28) (meters 0.1))
@@ -1786,7 +1761,7 @@
   )
 
 (defpart 4223
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #x52d))
+  :init-specs ((:texture (hiphog-daxter-neon-off ctyport-sprite))
     (:num 1.0)
     (:y (meters -1))
     (:z (meters 0.25))
@@ -1806,7 +1781,7 @@
   )
 
 (defpart 4224
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #x52d))
+  :init-specs ((:texture (hiphog-daxter-neon-on ctyport-sprite))
     (:num 1.0)
     (:y (meters -1))
     (:z (meters 0.25))
@@ -1940,7 +1915,7 @@
   )
 
 (defpart 4226
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -1968,7 +1943,7 @@
   )
 
 (defpart 4227
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -1996,7 +1971,7 @@
   )
 
 (defpart 4228
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2024,7 +1999,7 @@
   )
 
 (defpart 4229
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2052,7 +2027,7 @@
   )
 
 (defpart 4230
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2080,7 +2055,7 @@
   )
 
 (defpart 4231
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2108,7 +2083,7 @@
   )
 
 (defpart 4232
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2136,7 +2111,7 @@
   )
 
 (defpart 4233
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2164,7 +2139,7 @@
   )
 
 (defpart 4234
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2192,7 +2167,7 @@
   )
 
 (defpart 4235
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2220,7 +2195,7 @@
   )
 
 (defpart 4236
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2248,7 +2223,7 @@
   )
 
 (defpart 4237
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2276,7 +2251,7 @@
   )
 
 (defpart 4238
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-blue-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2304,7 +2279,7 @@
   )
 
 (defpart 4239
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2332,7 +2307,7 @@
   )
 
 (defpart 4240
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2360,7 +2335,7 @@
   )
 
 (defpart 4241
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2388,7 +2363,7 @@
   )
 
 (defpart 4242
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2416,7 +2391,7 @@
   )
 
 (defpart 4243
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2444,7 +2419,7 @@
   )
 
 (defpart 4244
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2472,7 +2447,7 @@
   )
 
 (defpart 4245
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2500,7 +2475,7 @@
   )
 
 (defpart 4246
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2528,7 +2503,7 @@
   )
 
 (defpart 4247
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2556,7 +2531,7 @@
   )
 
 (defpart 4248
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2584,7 +2559,7 @@
   )
 
 (defpart 4249
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2612,7 +2587,7 @@
   )
 
 (defpart 4250
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-purple-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2673,7 +2648,7 @@
   )
 
 (defpart 4251
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2701,7 +2676,7 @@
   )
 
 (defpart 4252
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2729,7 +2704,7 @@
   )
 
 (defpart 4253
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2757,7 +2732,7 @@
   )
 
 (defpart 4254
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2785,7 +2760,7 @@
   )
 
 (defpart 4255
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2813,7 +2788,7 @@
   )
 
 (defpart 4256
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2841,7 +2816,7 @@
   )
 
 (defpart 4257
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2869,7 +2844,7 @@
   )
 
 (defpart 4258
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2897,7 +2872,7 @@
   )
 
 (defpart 4259
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2925,7 +2900,7 @@
   )
 
 (defpart 4260
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2953,7 +2928,7 @@
   )
 
 (defpart 4261
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -2981,7 +2956,7 @@
   )
 
 (defpart 4262
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3009,7 +2984,7 @@
   )
 
 (defpart 4263
-  :init-specs ((:texture (new 'static 'texture-id :index #x2e :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-orange-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3037,7 +3012,7 @@
   )
 
 (defpart 4264
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3065,7 +3040,7 @@
   )
 
 (defpart 4265
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3093,7 +3068,7 @@
   )
 
 (defpart 4266
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3121,7 +3096,7 @@
   )
 
 (defpart 4267
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3149,7 +3124,7 @@
   )
 
 (defpart 4268
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3177,7 +3152,7 @@
   )
 
 (defpart 4269
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3205,7 +3180,7 @@
   )
 
 (defpart 4270
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3233,7 +3208,7 @@
   )
 
 (defpart 4271
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3261,7 +3236,7 @@
   )
 
 (defpart 4272
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3289,7 +3264,7 @@
   )
 
 (defpart 4273
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3317,7 +3292,7 @@
   )
 
 (defpart 4274
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3345,7 +3320,7 @@
   )
 
 (defpart 4275
-  :init-specs ((:texture (new 'static 'texture-id :index #x30 :page #x52d))
+  :init-specs ((:texture (hiphog-exterior-yellow-on ctyport-sprite))
     (:num 1.0)
     (:x (meters 15.5))
     (:y (meters 0.5))
@@ -3377,58 +3352,57 @@
 (define *hiphog-exterior-marquee-daxter-group-ids* (new 'static 'boxed-array :type int32 #x3c8))
 
 (deftype hiphog-exterior-marquee (process-drawable)
-  ((rot           vector                   :inline :offset-assert 208)
-   (master-enable uint32                           :offset-assert 224)
-   (pad-ih12nb312 uint32                   3       :offset-assert 228)
-   (mode          uint32                           :offset-assert 240)
-   (counter       int32                            :offset-assert 244)
-   (parts         sparticle-launch-control 1       :offset-assert 248)
+  ((rot            vector                    :inline)
+   (master-enable  uint32)
+   (pad-ih12nb312  uint32                    3)
+   (mode           uint32)
+   (counter        int32)
+   (parts          sparticle-launch-control  1)
    )
-  :heap-base #x80
-  :method-count-assert 22
-  :size-assert         #xfc
-  :flag-assert         #x16008000fc
+  (:state-methods
+    idle
+    )
   (:methods
-    (idle () _type_ :state 20)
-    (hiphog-exterior-marquee-method-21 (_type_) none 21)
+    (hiphog-exterior-marquee-method-21 (_type_) none)
     )
   )
 
 
-(defmethod deactivate hiphog-exterior-marquee ((obj hiphog-exterior-marquee))
+(defmethod deactivate ((this hiphog-exterior-marquee))
+  "Make a process dead, clean it up, remove it from the active pool, and return to dead pool."
   (dotimes (s5-0 1)
-    (let ((a0-1 (-> obj parts s5-0)))
+    (let ((a0-1 (-> this parts s5-0)))
       (if (nonzero? a0-1)
           (kill-and-free-particles a0-1)
           )
       )
     )
-  ((method-of-type process-drawable deactivate) obj)
+  ((method-of-type process-drawable deactivate) this)
   (none)
   )
 
 ;; WARN: Return type mismatch process-drawable vs hiphog-exterior-marquee.
-(defmethod relocate hiphog-exterior-marquee ((obj hiphog-exterior-marquee) (arg0 int))
+(defmethod relocate ((this hiphog-exterior-marquee) (offset int))
   (dotimes (v1-0 1)
-    (if (nonzero? (-> obj parts v1-0))
-        (&+! (-> obj parts v1-0) arg0)
+    (if (nonzero? (-> this parts v1-0))
+        (&+! (-> this parts v1-0) offset)
         )
     )
-  (the-as hiphog-exterior-marquee ((method-of-type process-drawable relocate) obj arg0))
+  (the-as hiphog-exterior-marquee ((method-of-type process-drawable relocate) this offset))
   )
 
 ;; WARN: Return type mismatch symbol vs none.
-(defmethod hiphog-exterior-marquee-method-21 hiphog-exterior-marquee ((obj hiphog-exterior-marquee))
-  (+! (-> obj parts 0 state-counter) 1)
-  (when (!= (-> obj parts 0 state-mode 0) (-> obj mode))
-    (set! (-> obj parts 0 state-mode 0) (-> obj mode))
-    (set! (-> obj parts 0 state-counter) (the-as uint 0))
+(defmethod hiphog-exterior-marquee-method-21 ((this hiphog-exterior-marquee))
+  (+! (-> this parts 0 state-counter) 1)
+  (when (!= (-> this parts 0 state-mode 0) (-> this mode))
+    (set! (-> this parts 0 state-mode 0) (-> this mode))
+    (set! (-> this parts 0 state-counter) (the-as uint 0))
     0
     )
-  (let ((s5-0 (-> obj master-enable)))
+  (let ((s5-0 (-> this master-enable)))
     (dotimes (s4-0 1)
       (if (logtest? s5-0 1)
-          (spawn (-> obj parts s4-0) (-> obj root trans))
+          (spawn (-> this parts s4-0) (-> this root trans))
           )
       (set! s5-0 (shr s5-0 1))
       )
@@ -3460,25 +3434,24 @@
       (suspend)
       )
     #f
-    (none)
     )
-  :post (the-as (function none :behavior hiphog-exterior-marquee) ja-post)
+  :post ja-post
   )
 
 ;; WARN: Return type mismatch object vs none.
-(defmethod init-from-entity! hiphog-exterior-marquee ((obj hiphog-exterior-marquee) (arg0 entity-actor))
+(defmethod init-from-entity! ((this hiphog-exterior-marquee) (arg0 entity-actor))
   "Typically the method that does the initial setup on the process, potentially using the [[entity-actor]] provided as part of that.
-This commonly includes things such as:
-- stack size
-- collision information
-- loading the skeleton group / bones
-- sounds"
-  (set! (-> obj root) (new 'process 'trsqv))
-  (process-drawable-from-entity! obj arg0)
-  (logclear! (-> obj mask) (process-mask actor-pause enemy))
-  (set! (-> obj mask) (logior (process-mask ambient) (-> obj mask)))
-  (set! (-> obj master-enable) (the-as uint -1))
-  (set! (-> obj mode) (the-as uint (rand-vu-int-count 8)))
+   This commonly includes things such as:
+   - stack size
+   - collision information
+   - loading the skeleton group / bones
+   - sounds"
+  (set! (-> this root) (new 'process 'trsqv))
+  (process-drawable-from-entity! this arg0)
+  (logclear! (-> this mask) (process-mask actor-pause enemy))
+  (logior! (-> this mask) (process-mask ambient))
+  (set! (-> this master-enable) (the-as uint -1))
+  (set! (-> this mode) (the-as uint (rand-vu-int-count 8)))
   (let ((s5-1 (if (task-node-closed? (game-task-node nest-boss-resolution))
                   *hiphog-exterior-marquee-daxter-group-ids*
                   *hiphog-exterior-marquee-group-ids*
@@ -3486,10 +3459,10 @@ This commonly includes things such as:
               )
         )
     (dotimes (s4-0 1)
-      (set! (-> obj parts s4-0) (create-launch-control (-> *part-group-id-table* (-> s5-1 s4-0)) obj))
+      (set! (-> this parts s4-0) (create-launch-control (-> *part-group-id-table* (-> s5-1 s4-0)) this))
       )
     )
-  (go (method-of-object obj idle))
+  (go (method-of-object this idle))
   (none)
   )
 
@@ -3502,7 +3475,7 @@ This commonly includes things such as:
   )
 
 (defpart 4277
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 20) (meters 0.4))
@@ -3521,7 +3494,7 @@ This commonly includes things such as:
   )
 
 (defpart 4276
-  :init-specs ((:texture (new 'static 'texture-id :index #x1d :page #x52d))
+  :init-specs ((:texture (ctyport-hiphog-halo ctyport-sprite))
     (:num 1.0)
     (:x (meters 0.1))
     (:y (meters 0))
@@ -3541,12 +3514,8 @@ This commonly includes things such as:
 
 (deftype farthy (process-drawable)
   ()
-  :heap-base #x50
-  :method-count-assert 21
-  :size-assert         #xc8
-  :flag-assert         #x15005000c8
-  (:methods
-    (idle () _type_ :state 20)
+  (:state-methods
+    idle
     )
   )
 
@@ -3566,56 +3535,51 @@ This commonly includes things such as:
   :virtual #t
   :code (behavior ()
     (until #f
-      (ja-no-eval :group! (ja-group)
-                  :num! (seek! (the float (+ (-> (ja-group) frames num-frames) -1)))
-                  :frame-num 0.0
-                  )
+      (ja-no-eval :group! (ja-group) :num! (seek!) :frame-num 0.0)
       (until (ja-done? 0)
         (suspend)
         (ja :num! (seek!))
         )
       )
     #f
-    (none)
     )
   :post (behavior ()
     (ja-post)
     (if (nonzero? (-> self part))
-        (spawn-with-cspace (-> self part) (-> self node-list data 5))
+        (spawn-with-cspace (-> self part) (joint-node farthy-lod0-jg halo))
         )
-    (none)
     )
   )
 
 ;; WARN: Return type mismatch object vs none.
-(defmethod init-from-entity! farthy ((obj farthy) (arg0 entity-actor))
+(defmethod init-from-entity! ((this farthy) (arg0 entity-actor))
   "Typically the method that does the initial setup on the process, potentially using the [[entity-actor]] provided as part of that.
-This commonly includes things such as:
-- stack size
-- collision information
-- loading the skeleton group / bones
-- sounds"
-  (set! (-> obj root) (new 'process 'trsqv))
-  (process-drawable-from-entity! obj arg0)
-  (set! (-> obj root pause-adjust-distance) 1228800.0)
+   This commonly includes things such as:
+   - stack size
+   - collision information
+   - loading the skeleton group / bones
+   - sounds"
+  (set! (-> this root) (new 'process 'trsqv))
+  (process-drawable-from-entity! this arg0)
+  (set! (-> this root pause-adjust-distance) 1228800.0)
   (cond
     ((task-node-closed? (game-task-node nest-boss-resolution))
      (initialize-skeleton
-       obj
+       this
        (the-as skeleton-group (art-group-get-by-name *level* "skel-mecha-daxter" (the-as (pointer uint32) #f)))
        (the-as pair 0)
        )
      )
     (else
       (initialize-skeleton
-        obj
+        this
         (the-as skeleton-group (art-group-get-by-name *level* "skel-farthy" (the-as (pointer uint32) #f)))
         (the-as pair 0)
         )
-      (set! (-> obj part) (create-launch-control (-> *part-group-id-table* 969) obj))
+      (set! (-> this part) (create-launch-control (-> *part-group-id-table* 969) this))
       )
     )
-  (set! (-> obj draw light-index) (the-as uint 10))
-  (go (method-of-object obj idle))
+  (set! (-> this draw light-index) (the-as uint 10))
+  (go (method-of-object this idle))
   (none)
   )

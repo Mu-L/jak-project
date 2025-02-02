@@ -4,23 +4,19 @@
 ;; definition of type ctypal-part
 (deftype ctypal-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type ctypal-part
-(defmethod inspect ctypal-part ((obj ctypal-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this ctypal-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -46,7 +42,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4515
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 0.25)
     (:x (meters -1) (meters 2))
     (:y (meters 4) (meters 2))
@@ -75,7 +71,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4510
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 2.0 4.0)
     (:x (meters 0) (meters -2))
@@ -108,7 +104,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4511
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 2.0 4.0)
     (:x (meters 0) (meters -2))
@@ -141,7 +137,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4512
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 2.0 4.0)
     (:x (meters 0) (meters -2))
@@ -191,7 +187,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4509
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 1.0 2.0)
     (:x (meters 0) (meters -2))
@@ -220,7 +216,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4513
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.2 0.2)
     (:x (meters -1.5))
     (:y (meters 1))
@@ -307,30 +303,9 @@
     (let ((s3-0 (new 'stack-no-clear 'vector)))
       (sp-kill-particle arg0 arg1)
       (set-vector! s3-0 (-> arg2 vector 0 x) (-> arg1 user-float) (-> arg2 vector 0 z) 1.0)
-      (let ((t9-1 sp-launch-particles-var)
-            (a0-3 *sp-particle-system-2d*)
-            (a1-2 (-> *part-id-table* 4527))
-            (a2-1 *launch-matrix*)
-            )
-        (set! (-> a2-1 trans quad) (-> s3-0 quad))
-        (t9-1 a0-3 a1-2 a2-1 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-2 sp-launch-particles-var)
-            (a0-4 *sp-particle-system-2d*)
-            (a1-3 (-> *part-id-table* 4528))
-            (a2-2 *launch-matrix*)
-            )
-        (set! (-> a2-2 trans quad) (-> s3-0 quad))
-        (t9-2 a0-4 a1-3 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-3 sp-launch-particles-var)
-            (a0-5 *sp-particle-system-3d*)
-            (a1-4 (-> *part-id-table* 4529))
-            (a2-3 *launch-matrix*)
-            )
-        (set! (-> a2-3 trans quad) (-> s3-0 quad))
-        (t9-3 a0-5 a1-4 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
+      (launch-particles (-> *part-id-table* 4527) s3-0)
+      (launch-particles (-> *part-id-table* 4528) s3-0)
+      (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 4529) s3-0)
       )
     )
   (sparticle-motion-blur arg0 arg1 (the-as vector arg2))
@@ -339,7 +314,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4522
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -369,7 +344,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4531
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -400,7 +375,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4521
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.8)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -440,7 +415,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4524
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.8)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -471,7 +446,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4523
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.3)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -501,7 +476,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4526
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.3)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -532,7 +507,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4527
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:scale-x (meters 0.15) (meters 0.05))
     (:rot-x 4)
@@ -558,7 +533,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4528
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.5) (meters 1))
     (:y (meters 0.25) (meters 0.25))
@@ -589,7 +564,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4529
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #xc))
+  :init-specs ((:texture (water-ring effects))
     (:num 1.0)
     (:y (meters 0.02))
     (:scale-x (meters 2))
@@ -621,7 +596,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4535
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 2.0)
     (:x (meters -0.2) (meters 0.4))
     (:y (meters -0.1) (meters 0.2))
@@ -651,7 +626,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4534
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:x (meters -0.2) (meters 0.4))
     (:y (meters -0.1) (meters 0.2))
@@ -681,7 +656,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4536
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -737,7 +712,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4539
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 2.0)
     (:x (meters -0.2) (meters 0.4))
     (:y (meters -0.1) (meters 0.2))
@@ -767,7 +742,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4538
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:x (meters -0.2) (meters 0.4))
     (:y (meters -0.1) (meters 0.2))
@@ -802,7 +777,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4540
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -832,7 +807,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4541
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:x (meters -0.1) (meters 0.2))
     (:y (meters -0.1) (meters 0.2))
@@ -862,7 +837,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4542
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #xc))
+  :init-specs ((:texture (water-ring effects))
     (:num 0.5)
     (:x (meters 0) (meters 0.5))
     (:y (meters 0.02))
@@ -896,7 +871,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4544
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 4.5) (meters 0.1))
     (:rot-x (degrees 2.25))
@@ -915,7 +890,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4545
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters -1.5))
     (:scale-x (meters 4.5) (meters 0.1))
@@ -936,7 +911,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4546
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters 1.5))
     (:scale-x (meters 4.5) (meters 0.1))
@@ -957,7 +932,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4547
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 16) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -983,7 +958,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4548
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 3.5) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -1010,7 +985,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4549
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5 0.5)
     (:x (meters -1) (meters 2))
     (:y (meters 0))
@@ -1053,7 +1028,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4551
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.5) (meters 1))
     (:z (meters -0.5) (meters 1))

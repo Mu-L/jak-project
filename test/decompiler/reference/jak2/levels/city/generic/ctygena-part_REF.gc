@@ -4,45 +4,37 @@
 ;; definition of type ctygena-part
 (deftype ctygena-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type ctygena-part
-(defmethod inspect ctygena-part ((obj ctygena-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this ctygena-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; definition of type citytest-part
 (deftype citytest-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type citytest-part
-(defmethod inspect citytest-part ((obj citytest-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this citytest-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -59,7 +51,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3568
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 4.5) (meters 0.1))
     (:rot-x (degrees 2.25))
@@ -78,7 +70,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3569
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters -1.5))
     (:scale-x (meters 4.5) (meters 0.1))
@@ -99,7 +91,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3570
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:z (meters 1.5))
     (:scale-x (meters 4.5) (meters 0.1))
@@ -120,7 +112,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3571
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 16) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -146,7 +138,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3572
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 3.5) (meters 0.1))
     (:rot-x (degrees 4.5))
@@ -173,7 +165,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3573
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.05))
     (:scale-x (meters 2) (meters 0.1))
@@ -193,7 +185,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3574
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.05))
     (:scale-x (meters 6) (meters 0.1))
@@ -224,7 +216,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3575
-  :init-specs ((:texture (new 'static 'texture-id :index #x1b :page #x45d))
+  :init-specs ((:texture (sign-ratchet ctygena-sprite))
     (:num 1.0)
     (:y (meters 2.5))
     (:z (meters -2))
@@ -246,7 +238,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3576
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 2.5))
     (:z (meters -2))
@@ -275,7 +267,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3577
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.5) (meters 1))
     (:z (meters -0.5) (meters 1))
@@ -322,7 +314,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3581
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 48) (meters 0.1))
@@ -342,7 +334,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3579
-  :init-specs ((:texture (new 'static 'texture-id :index #x20 :page #x45d))
+  :init-specs ((:texture (sign-hiphog-exterior-krew ctygena-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 8))
@@ -365,7 +357,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3580
-  :init-specs ((:texture (new 'static 'texture-id :index #x1c :page #x45d))
+  :init-specs ((:texture (sign-naughtydog ctygena-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 8))
@@ -400,7 +392,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3584
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 32) (meters 0.1))
@@ -420,7 +412,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3582
-  :init-specs ((:texture (new 'static 'texture-id :index #x1c :page #x45d))
+  :init-specs ((:texture (sign-naughtydog ctygena-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 16))
@@ -443,7 +435,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3583
-  :init-specs ((:texture (new 'static 'texture-id :index #x1c :page #x45d))
+  :init-specs ((:texture (sign-naughtydog ctygena-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 16))
@@ -478,7 +470,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3587
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 1))
     (:scale-x (meters 32) (meters 0.1))
@@ -498,7 +490,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3585
-  :init-specs ((:texture (new 'static 'texture-id :index #x1f :page #x45d))
+  :init-specs ((:texture (sign-hiphog2 ctygena-sprite))
     (:num 1.0)
     (:z (meters 0.1))
     (:scale-x (meters 8))
@@ -521,7 +513,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3586
-  :init-specs ((:texture (new 'static 'texture-id :index #x1f :page #x45d))
+  :init-specs ((:texture (sign-hiphog2 ctygena-sprite))
     (:num 1.0)
     (:z (meters -0.1))
     (:scale-x (meters 8))
@@ -552,7 +544,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3588
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5 0.5)
     (:x (meters -1) (meters 2))
     (:y (meters 0))
@@ -595,7 +587,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3591
-  :init-specs ((:texture (new 'static 'texture-id :index #x1d :page #x45d))
+  :init-specs ((:texture (ctygenb-ticker-backing ctygena-sprite))
     (:num 1.0)
     (:scale-x (meters 24))
     (:scale-y (meters 2.3))
@@ -611,7 +603,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3590
-  :init-specs ((:texture (new 'static 'texture-id :index #x73 :page #x45e))
+  :init-specs ((:texture (ticker-e ctywide-sprite))
     (:birth-func 'birth-func-texture-group)
     (:num 0.18)
     (:x (meters -12))
@@ -649,7 +641,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3594
-  :init-specs ((:texture (new 'static 'texture-id :index #x1d :page #x45d))
+  :init-specs ((:texture (ctygenb-ticker-backing ctygena-sprite))
     (:num 1.0)
     (:scale-x (meters 20))
     (:scale-y (meters 3))
@@ -666,7 +658,7 @@
 
 ;; failed to figure out what this is:
 (defpart 3593
-  :init-specs ((:texture (new 'static 'texture-id :index #x73 :page #x45e))
+  :init-specs ((:texture (ticker-e ctywide-sprite))
     (:birth-func 'birth-func-texture-group)
     (:num 0.2)
     (:z (meters -10.5))

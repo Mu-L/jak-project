@@ -3,11 +3,17 @@
 #include "common/log/log.h"
 #include "common/util/Assert.h"
 
-#include "third-party/fmt/core.h"
+#include "fmt/core.h"
 #define STBI_WINDOWS_UTF8
 #include "third-party/stb_image/stb_image.h"
 
 namespace decompiler {
+
+TextureDB::TextureDB() {
+  std::vector<u32> data(16 * 16, 0xffffffff);
+  add_texture(kPlaceholderWhiteTexturePage, kPlaceholderWhiteTextureId, data, 16, 16,
+              "placeholder-white", "placeholder", {}, 1, 0);
+}
 
 void TextureDB::add_texture(u32 tpage,
                             u32 texid,
@@ -51,24 +57,99 @@ void TextureDB::add_texture(u32 tpage,
   }
 }
 
+void TextureDB::add_index_texture(u32 tpage,
+                                  u32 texid,
+                                  const std::vector<u8>& index_data,
+                                  const std::array<math::Vector4<u8>, 256>& clut,
+                                  u16 w,
+                                  u16 h,
+                                  const std::string& tex_name,
+                                  const std::string& tpage_name,
+                                  const std::vector<std::string>& level_names) {
+  auto existing_tpage_name = tpage_names.find(tpage);
+  if (existing_tpage_name == tpage_names.end()) {
+    tpage_names[tpage] = tpage_name;
+  } else {
+    ASSERT(existing_tpage_name->second == tpage_name);
+  }
+
+  u32 combo_id = (tpage << 16) | texid;
+  auto existing_tex = index_textures_by_combo_id.find(combo_id);
+  if (existing_tex != index_textures_by_combo_id.end()) {
+    ASSERT(existing_tex->second.name == tex_name);
+    ASSERT(existing_tex->second.w == w);
+    ASSERT(existing_tex->second.h == h);
+    ASSERT(existing_tex->second.index_data == index_data);
+    ASSERT(existing_tex->second.combo_id == combo_id);
+    ASSERT(existing_tex->second.color_table == clut);
+    ASSERT(existing_tex->second.tpage_name == tpage_name);
+    for (auto& ln : level_names) {
+      existing_tex->second.level_names.push_back(ln);
+    }
+  } else {
+    auto& new_tex = index_textures_by_combo_id[combo_id];
+    new_tex.index_data = index_data;
+    new_tex.color_table = clut;
+    new_tex.name = tex_name;
+    new_tex.w = w;
+    new_tex.h = h;
+    new_tex.tpage_name = tpage_name;
+    new_tex.combo_id = combo_id;
+    new_tex.level_names = level_names;
+  }
+}
+
+void TextureDB::merge_textures(const fs::path& base_path) {
+  for (auto& tex : textures) {
+    fs::path full_path = base_path / tpage_names.at(tex.second.page) / (tex.second.name + ".png");
+    if (fs::exists(full_path)) {
+      lg::info("Merging {}", full_path.string().c_str());
+      int w, h;
+      auto merge_data = stbi_load(full_path.string().c_str(), &w, &h, 0, 4);  // rgba channels
+      if (!merge_data) {
+        lg::warn("failed to load PNG file: {}", full_path.string().c_str());
+        continue;
+      } else if (w != tex.second.w || h != tex.second.h) {
+        lg::warn("merge texture does not match the same dimensions: {}, {} != {} || {} != {}",
+                 full_path.string().c_str(), w, tex.second.w, h, tex.second.h);
+        stbi_image_free(merge_data);
+        continue;
+      }
+      // Merge any non-transparent pixels into the existing texture
+      for (int i = 0; i < w * h * 4; i += 4) {
+        const auto merge_pixel_a = merge_data[i + 3];
+        if (merge_pixel_a != 0) {
+          u32 merge_pixel;
+          memcpy(&merge_pixel, &merge_data[i], sizeof(u32));
+          tex.second.rgba_bytes.at(i / 4) = merge_pixel;
+        }
+      }
+      stbi_image_free(merge_data);
+    }
+  }
+}
+
 void TextureDB::replace_textures(const fs::path& path) {
   fs::path base_path(path);
   for (auto& tex : textures) {
     fs::path full_path = base_path / tpage_names.at(tex.second.page) / (tex.second.name + ".png");
-    if (fs::exists(full_path)) {
-      lg::info("Replacing {}", full_path.string().c_str());
-      int w, h;
-      auto data = stbi_load(full_path.string().c_str(), &w, &h, 0, 4);  // rgba channels
-      if (!data) {
-        lg::warn("failed to load PNG file: {}", full_path.string().c_str());
+    if (!fs::exists(full_path)) {
+      full_path = base_path / "_all" / (tex.second.name + ".png");
+      if (!fs::exists(full_path))
         continue;
-      }
-      tex.second.rgba_bytes.resize(w * h);
-      memcpy(tex.second.rgba_bytes.data(), data, w * h * 4);
-      tex.second.w = w;
-      tex.second.h = h;
-      stbi_image_free(data);
     }
+    lg::info("Replacing {}", tpage_names.at(tex.second.page) + "/" + (tex.second.name));
+    int w, h;
+    auto data = stbi_load(full_path.string().c_str(), &w, &h, 0, 4);  // rgba channels
+    if (!data) {
+      lg::warn("failed to load PNG file: {}", full_path.string().c_str());
+      continue;
+    }
+    tex.second.rgba_bytes.resize(w * h);
+    memcpy(tex.second.rgba_bytes.data(), data, w * h * 4);
+    tex.second.w = w;
+    tex.second.h = h;
+    stbi_image_free(data);
   }
 }
 

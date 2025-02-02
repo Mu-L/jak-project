@@ -3,8 +3,7 @@
 #include <optional>
 
 #include "common/common_types.h"
-
-#include "SQLiteCpp/SQLiteCpp.h"
+#include "common/sqlite/sqlite.h"
 
 namespace jak2 {
 void InitParms(int argc, const char* const* argv);
@@ -13,8 +12,9 @@ int InitMachine();
 int ShutdownMachine();
 void InitMachineScheme();
 
-extern std::optional<SQLite::Database> sql_db;
+extern sqlite::SQLiteDatabase sql_db;
 void initialize_sql_db();
+sqlite::GenericResponse run_sql_query(const std::string& query);
 
 struct MouseInfo {
   //  ((active symbol :offset-assert 4)
@@ -52,25 +52,5 @@ struct MouseInfo {
   //  (speedx float :offset 92)
   //  (speedy float :offset 108)
 };
-
-struct DiscordInfo {
-  u32 orb_count;            // (pointer float)
-  u32 gem_count;            // (pointer float)
-  u32 death_count;          // (pointer int32)
-  u32 status;               // string
-  u32 level;                // string
-  u32 cutscene;             // symbol - bool
-  u32 time_of_day;          // (pointer float
-  float percent_completed;  // float
-};
-// To speedup finding the auto-splitter block in GOAL memory
-// all this has is a marker for LiveSplit to find, and then the pointer
-// to the symbol
-struct AutoSplitterBlock {
-  const char marker[20] = "UnLiStEdStRaTs_JaK2";
-  u64 pointer_to_symbol = 0;
-};
-
-extern AutoSplitterBlock gAutoSplitterBlock;
 
 }  // namespace jak2

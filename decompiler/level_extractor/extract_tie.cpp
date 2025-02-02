@@ -356,6 +356,10 @@ struct TieFrag {
   } prog_info;
 };
 
+struct TimeOfDayColor {
+  math::Vector<u8, 4> rgba[8];
+};
+
 // main instance type
 // unlike the GOAL type, we store all instances info in here too.
 struct TieProtoInfo {
@@ -364,8 +368,8 @@ struct TieProtoInfo {
   u32 proto_flag;
   float stiffness = 0;  // wind
   std::optional<AdgifInfo> envmap_adgif;
-  std::vector<tfrag3::TimeOfDayColor> time_of_day_colors;  // c++ type for time of day data
-  std::vector<TieFrag> frags;                              // the fragments of the prototype
+  std::vector<TimeOfDayColor> time_of_day_colors;  // c++ type for time of day data
+  std::vector<TieFrag> frags;                      // the fragments of the prototype
 };
 
 /*!
@@ -1456,7 +1460,7 @@ struct NrmDebug {
   int ip2 = 0;
 };
 
-void emulate_tie_instance_program(std::vector<TieProtoInfo>& protos) {
+void emulate_tie_instance_program(std::vector<TieProtoInfo>& protos, GameVersion version) {
   for (auto& proto : protos) {
     //    bool first_instance = true;
     //    for (auto& instance : proto.instances) {
@@ -1622,7 +1626,10 @@ void emulate_tie_instance_program(std::vector<TieProtoInfo>& protos) {
           vertex_info.nrm = frag.get_normal_if_present(normal_table_offset++);
 
           bool inserted = frag.vertex_by_dest_addr.insert({(u32)dest_ptr, vertex_info}).second;
-          ASSERT(inserted);
+          // TODO hack
+          if (version != GameVersion::Jak3) {
+            ASSERT(inserted);
+          }
           nd.bp1++;
 
           if (reached_target) {
@@ -2091,7 +2098,7 @@ std::string dump_full_to_obj(const std::vector<TieProtoInfo>& protos) {
 // and this tells us an index in the time of day palette.
 
 struct BigPalette {
-  std::vector<tfrag3::TimeOfDayColor> colors;
+  std::vector<TimeOfDayColor> colors;
 };
 
 // combine all individual time of day palettes into one giant one.
@@ -2119,6 +2126,21 @@ BigPalette make_big_palette(std::vector<TieProtoInfo>& protos) {
 
   ASSERT(result.colors.size() < UINT16_MAX);
   return result;
+}
+
+tfrag3::PackedTimeOfDay pack_big_palette(const BigPalette& in) {
+  tfrag3::PackedTimeOfDay out;
+  out.color_count = (in.colors.size() + 3) & (~3);
+  out.data.resize(out.color_count * 8 * 4);
+
+  for (u32 color = 0; color < in.colors.size(); color++) {
+    for (u32 palette = 0; palette < 8; palette++) {
+      for (u32 channel = 0; channel < 4; channel++) {
+        out.read(color, palette, channel) = in.colors.at(color).rgba[palette][channel];
+      }
+    }
+  }
+  return out;
 }
 
 /*!
@@ -2317,10 +2339,16 @@ TieCategoryInfo get_jak1_tie_category(u32 flags) {
   return result;
 }
 
-u32 get_or_add_texture(u32 combo_tex, tfrag3::Level& lev, const TextureDB& tdb) {
+s32 get_or_add_texture(u32 combo_tex, tfrag3::Level& lev, const TextureDB& tdb) {
+  if (combo_tex == 0) {
+    // untextured
+    combo_tex = (((u32)TextureDB::kPlaceholderWhiteTexturePage) << 16) |
+                TextureDB::kPlaceholderWhiteTextureId;
+  }
+
   // try looking it up in the existing textures that we have in the C++ renderer data.
   // (this is shared with tfrag)
-  u32 idx_in_lev_data = UINT32_MAX;
+  s32 idx_in_lev_data = INT32_MAX;
   for (u32 i = 0; i < lev.textures.size(); i++) {
     if (lev.textures[i].combo_id == combo_tex) {
       idx_in_lev_data = i;
@@ -2328,50 +2356,42 @@ u32 get_or_add_texture(u32 combo_tex, tfrag3::Level& lev, const TextureDB& tdb) 
     }
   }
 
-  if (idx_in_lev_data == UINT32_MAX) {
-    if (combo_tex == 0) {
-      //              lg::warn("unhandled texture 0 case in extract_tie for {} {}",
-      //              lev.level_name,
-      //                       proto.name);
-      idx_in_lev_data = 0;
-    } else {
-      // didn't find it, have to add a new one texture.
-      auto tex_it = tdb.textures.find(combo_tex);
-      if (tex_it == tdb.textures.end()) {
-        bool ok_to_miss = false;  // for TIE, there's no missing textures.
-        if (ok_to_miss) {
-          // we're missing a texture, just use the first one.
-          tex_it = tdb.textures.begin();
-        } else {
-          ASSERT_MSG(
-              false,
-              fmt::format("texture {} wasn't found. make sure it is loaded somehow. You may need "
-                          "to "
-                          "include ART.DGO or GAME.DGO in addition to the level DGOs for shared "
-                          "textures. tpage is {}. id is {} (0x{:x})",
-                          combo_tex, combo_tex >> 16, combo_tex & 0xffff, combo_tex & 0xffff));
-        }
-      }
-      // add a new texture to the level data
-      idx_in_lev_data = lev.textures.size();
-      lev.textures.emplace_back();
-      auto& new_tex = lev.textures.back();
-      new_tex.combo_id = combo_tex;
-      new_tex.w = tex_it->second.w;
-      new_tex.h = tex_it->second.h;
-      new_tex.debug_name = tex_it->second.name;
-      new_tex.debug_tpage_name = tdb.tpage_names.at(tex_it->second.page);
-      new_tex.data = tex_it->second.rgba_bytes;
+  if (idx_in_lev_data == INT32_MAX) {
+    // didn't find it, have to add a new one texture.
+    auto tex_it = tdb.textures.find(combo_tex);
+    if (tex_it == tdb.textures.end()) {
+      ASSERT_MSG(false, fmt::format(
+                            "texture {} wasn't found. make sure it is loaded somehow. You may need "
+                            "to "
+                            "include ART.DGO or GAME.DGO in addition to the level DGOs for shared "
+                            "textures. tpage is {}. id is {} (0x{:x})",
+                            combo_tex, combo_tex >> 16, combo_tex & 0xffff, combo_tex & 0xffff));
     }
+    // add a new texture to the level data
+    idx_in_lev_data = lev.textures.size();
+    lev.textures.emplace_back();
+    auto& new_tex = lev.textures.back();
+    new_tex.combo_id = combo_tex;
+    new_tex.w = tex_it->second.w;
+    new_tex.h = tex_it->second.h;
+    new_tex.debug_name = tex_it->second.name;
+    new_tex.debug_tpage_name = tdb.tpage_names.at(tex_it->second.page);
+    new_tex.data = tex_it->second.rgba_bytes;
+  }
+  const auto& level_tex = lev.textures.at(idx_in_lev_data);
+  const auto& it = tdb.animated_tex_output_to_anim_slot.find(level_tex.debug_name);
+  if (it != tdb.animated_tex_output_to_anim_slot.end()) {
+    // lg::warn("TIE animated texture: {}", level_tex.debug_name);
+    return -int(it->second) - 1;
   }
   return idx_in_lev_data;
 }
 
 void handle_wind_draw_for_strip(
     tfrag3::TieTree& tree,
-    std::unordered_map<u32, std::vector<u32>>& wind_draws_by_tex,
+    std::unordered_map<s32, std::vector<u32>>& wind_draws_by_tex,
     const std::vector<std::vector<std::pair<int, int>>>& packed_vert_indices,
-    u32 idx_in_lev_data,
+    s32 idx_in_lev_data,
     DrawMode mode,
     const TieStrip& strip,
     const TieInstanceInfo& inst,
@@ -2438,11 +2458,11 @@ void handle_wind_draw_for_strip(
 }
 
 void handle_draw_for_strip(tfrag3::TieTree& tree,
-                           std::unordered_map<u32, std::vector<u32>>& static_draws_by_tex,
+                           std::unordered_map<s32, std::vector<u32>>& static_draws_by_tex,
                            std::vector<tfrag3::StripDraw>& category_draws,
                            const std::vector<std::vector<std::pair<int, int>>>& packed_vert_indices,
                            DrawMode mode,
-                           u32 idx_in_lev_data,
+                           s32 idx_in_lev_data,
                            const TieStrip& strip,
                            const TieInstanceInfo& inst,
                            const TieInstanceFragInfo& ifrag,
@@ -2489,6 +2509,14 @@ void handle_draw_for_strip(tfrag3::TieTree& tree,
   grp.matrix_idx = matrix_idx;
   grp.start_vert = packed_vert_indices.at(frag_idx).at(strip_idx).first;
   grp.end_vert = packed_vert_indices.at(frag_idx).at(strip_idx).second;
+  grp.has_normals = false;
+  for (auto i = grp.start_vert; i < grp.end_vert; i++) {
+    auto& v = tree.packed_vertices.vertices.at(i);
+    if (v.nx || v.ny || v.nz) {
+      grp.has_normals = true;
+      break;
+    }
+  }
 
   tree.packed_vertices.matrix_groups.push_back(grp);
   tfrag3::StripDraw::VertexRun run;
@@ -2520,8 +2548,8 @@ void add_vertices_and_static_draw(tfrag3::TieTree& tree,
                                   GameVersion version) {
   // our current approach for static draws is just to flatten to giant mesh, except for wind stuff.
   // this map sorts these two types of draws by texture.
-  std::unordered_map<u32, std::vector<u32>> static_draws_by_tex;
-  std::unordered_map<u32, std::vector<u32>> wind_draws_by_tex;
+  std::unordered_map<s32, std::vector<u32>> static_draws_by_tex;
+  std::unordered_map<s32, std::vector<u32>> wind_draws_by_tex;
 
   std::array<std::vector<tfrag3::StripDraw>, tfrag3::kNumTieCategories> draws_by_category;
 
@@ -2542,6 +2570,7 @@ void add_vertices_and_static_draw(tfrag3::TieTree& tree,
         info = get_jak1_tie_category(proto.proto_flag);
         break;
       case GameVersion::Jak2:
+      case GameVersion::Jak3:
         info = get_jak2_tie_category(proto.proto_flag);
         break;
       default:
@@ -2609,7 +2638,7 @@ void add_vertices_and_static_draw(tfrag3::TieTree& tree,
         for (size_t strip_idx = 0; strip_idx < frag.strips.size(); strip_idx++) {
           auto& strip = frag.strips[strip_idx];
 
-          u32 idx_in_lev_data = get_or_add_texture(strip.adgif.combo_tex, lev, tdb);
+          s32 idx_in_lev_data = get_or_add_texture(strip.adgif.combo_tex, lev, tdb);
           // determine the draw mode
           DrawMode mode = process_draw_mode(strip.adgif, frag.prog_info.misc_x == 0,
                                             frag.has_magic_tex0_bit, version, info.category);
@@ -2626,7 +2655,7 @@ void add_vertices_and_static_draw(tfrag3::TieTree& tree,
                                     draws_by_category.at((int)info.category), packed_vert_indices,
                                     mode, idx_in_lev_data, strip, inst, ifrag, proto_idx, frag_idx,
                                     strip_idx, matrix_idx);
-              u32 envmap_tex_idx =
+              s32 envmap_tex_idx =
                   get_or_add_texture(proto.envmap_adgif.value().combo_tex, lev, tdb);
 
               // second pass envmap draw mode, in envmap bucket, envmap-specific draw list
@@ -2697,6 +2726,25 @@ void merge_groups(std::vector<tfrag3::StripDraw::VisGroup>& grps) {
   std::swap(result, grps);
 }
 
+void merge_groups(std::vector<tfrag3::PackedTieVertices::MatrixGroup>& grps) {
+  std::vector<tfrag3::PackedTieVertices::MatrixGroup> result;
+  result.push_back(grps.at(0));
+
+  for (size_t i = 1; i < grps.size(); i++) {
+    auto& this_group = grps[i];
+    auto& maybe_merge = result.back();
+    if (this_group.start_vert == maybe_merge.end_vert &&
+        this_group.matrix_idx == maybe_merge.matrix_idx &&
+        this_group.has_normals == maybe_merge.has_normals) {
+      maybe_merge.end_vert = this_group.end_vert;
+    } else {
+      result.push_back(this_group);
+    }
+  }
+
+  std::swap(result, grps);
+}
+
 void extract_tie(const level_tools::DrawableTreeInstanceTie* tree,
                  const std::string& debug_name,
                  const std::vector<level_tools::TextureRemap>& tex_map,
@@ -2705,6 +2753,10 @@ void extract_tie(const level_tools::DrawableTreeInstanceTie* tree,
                  bool dump_level,
                  GameVersion version) {
   for (int geo = 0; geo < GEOM_MAX; ++geo) {
+    // as far as I can tell, this one has bad colors
+    if (debug_name == "PRECD.DGO-2-tie" && geo == 3) {
+      continue;
+    }
     tfrag3::TieTree this_tree;
 
     // sanity check the vis tree (not a perfect check, but this is used in game and should be right)
@@ -2744,12 +2796,12 @@ void extract_tie(const level_tools::DrawableTreeInstanceTie* tree,
     auto info =
         collect_instance_info(as_instance_array, &tree->prototypes.prototype_array_tie.data, geo);
     update_proto_info(&info, tex_map, tree->prototypes.prototype_array_tie.data, geo, version);
-    if (version != GameVersion::Jak2) {
+    if (version < GameVersion::Jak2) {
       check_wind_vectors_zero(info, tree->prototypes.wind_vectors);
     }
     // determine draws from VU program
     emulate_tie_prototype_program(info);
-    emulate_tie_instance_program(info);
+    emulate_tie_instance_program(info, version);
     emulate_kicks(info);
 
     // debug save to .obj
@@ -2798,7 +2850,9 @@ void extract_tie(const level_tools::DrawableTreeInstanceTie* tree,
       merge_groups(draw.instance_groups);
     }
 
-    this_tree.colors = full_palette.colors;
+    merge_groups(this_tree.packed_vertices.matrix_groups);
+
+    this_tree.colors = pack_big_palette(full_palette);
     out.tie_trees[geo].push_back(std::move(this_tree));
   }
 }

@@ -38,7 +38,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5227
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 3.0 3.0)
     (:scale-x (meters 12.5))
     (:rot-x 4)
@@ -64,37 +64,32 @@
 
 ;; definition of type canyon-lightning-thingy
 (deftype canyon-lightning-thingy (process-drawable)
-  ((lightning lightning-control 5 :offset-assert 200)
+  ((lightning  lightning-control  5)
    )
-  :heap-base #x60
-  :method-count-assert 21
-  :size-assert         #xdc
-  :flag-assert         #x15006000dc
-  (:methods
-    (zap () _type_ :state 20)
+  (:state-methods
+    zap
     )
   )
 
 ;; definition for method 3 of type canyon-lightning-thingy
-(defmethod inspect canyon-lightning-thingy ((obj canyon-lightning-thingy))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this canyon-lightning-thingy))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type process-drawable inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
-  (format #t "~2Tlightning[5] @ #x~X~%" (-> obj lightning))
+  (format #t "~2Tlightning[5] @ #x~X~%" (-> this lightning))
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
 (defstate zap (canyon-lightning-thingy)
   :virtual #t
   :enter (behavior ()
-    (set! (-> self state-time) (-> self clock frame-counter))
-    (none)
+    (set-time! (-> self state-time))
     )
   :exit (behavior ()
     (dotimes (v1-0 5)
@@ -117,11 +112,10 @@
         (set! (-> control state mode) (the-as lightning-mode mode))
         )
       )
-    (none)
     )
   :trans (behavior ()
     (cond
-      ((>= (- (-> self clock frame-counter) (-> self state-time)) (seconds 0.125))
+      ((time-elapsed? (-> self state-time) (seconds 0.125))
        (let ((gp-0 (new 'stack-no-clear 'vector)))
          (set! (-> gp-0 quad) (-> self root trans quad))
          (let ((v1-7 (quaternion->matrix (new 'stack-no-clear 'matrix) (-> self root quat)))
@@ -181,20 +175,19 @@
         (spawn (-> self part) (-> self root trans))
         )
       )
-    (none)
     )
-  :code (the-as (function none :behavior canyon-lightning-thingy) sleep-code)
+  :code sleep-code
   )
 
 ;; definition for method 7 of type canyon-lightning-thingy
 ;; WARN: Return type mismatch process-drawable vs canyon-lightning-thingy.
-(defmethod relocate canyon-lightning-thingy ((obj canyon-lightning-thingy) (arg0 int))
+(defmethod relocate ((this canyon-lightning-thingy) (offset int))
   (dotimes (index 5)
-    (if (nonzero? (-> obj lightning index))
-        (&+! (-> obj lightning index) arg0)
+    (if (nonzero? (-> this lightning index))
+        (&+! (-> this lightning index) offset)
         )
     )
-  (the-as canyon-lightning-thingy ((method-of-type process-drawable relocate) obj arg0))
+  (the-as canyon-lightning-thingy ((method-of-type process-drawable relocate) this offset))
   )
 
 ;; definition for function canyon-lightning-thingy-init-by-other
@@ -275,7 +268,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5228
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:z (meters -35))
     (:scale-x (meters 6))
@@ -295,7 +288,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5229
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 5.0)
     (:z (meters -35) (meters -5))
     (:scale-x (meters 1))
@@ -315,7 +308,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5230
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:z (meters -35))
     (:scale-x (meters 0.1))
@@ -332,7 +325,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5231
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:scale-x (meters 0.5))
     (:scale-y :copy scale-x)
@@ -362,7 +355,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5232
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:rot-x (degrees 22.5))
     (:r 0.0)
@@ -402,7 +395,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5235
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 10.0)
     (:x (meters 0) (meters 0.6))
     (:y (meters 4))
@@ -446,7 +439,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5236
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 10.0 20.0)
     (:x (meters 0.25))
     (:y (meters 4))
@@ -519,7 +512,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5238
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 10.0 20.0)
     (:y (meters 4))
     (:scale-x (meters 30) (meters 3))
@@ -570,7 +563,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5245
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.25) (meters 1))
     (:scale-x (meters 8) (meters 2))
@@ -601,7 +594,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5246
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0 0.5)
     (:x (meters -6) (meters 12))
     (:scale-x (meters 8) (meters 2))
@@ -633,7 +626,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5247
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 3.5))
     (:rot-x (degrees 45))
@@ -657,7 +650,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5248
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 0.15) (meters 0.01))
     (:rot-x (degrees 2.25))
@@ -873,7 +866,7 @@
                          *screen-filter*
                          (new 'static 'vector :x 255.0 :y 255.0 :z 255.0)
                          (new 'static 'vector :x 255.0 :y 255.0 :z 255.0 :w 128.0)
-                         (* 128.0 (-> self clock seconds-per-frame))
+                         (* 128.0 (seconds-per-frame))
                          (bucket-id screen-filter)
                          )
                        )
@@ -959,7 +952,7 @@
                            *screen-filter*
                            (new 'static 'vector :x 255.0 :y 255.0 :z 255.0 :w 128.0)
                            (new 'static 'vector :x 255.0 :y 128.0)
-                           (-> self clock seconds-per-frame)
+                           (seconds-per-frame)
                            (bucket-id screen-filter)
                            )
                          )

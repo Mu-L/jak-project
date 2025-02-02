@@ -1,3 +1,6 @@
+#include <unordered_map>
+#include <unordered_set>
+
 #include "Form.h"
 #include "FormStack.h"
 #include "GenericElementMatcher.h"
@@ -119,7 +122,7 @@ Form* try_cast_simplify(Form* in,
     return in;
   }
 
-  if (env.version == GameVersion::Jak2) {
+  if (env.version >= GameVersion::Jak2) {
     if (new_type == TypeSpec("float")) {
       auto ic = get_goal_integer_constant(in, env);
       if (ic) {
@@ -135,7 +138,7 @@ Form* try_cast_simplify(Form* in,
   if (new_type == TypeSpec("meters")) {
     auto fc = get_goal_float_constant(in);
 
-    if (!fc && env.version == GameVersion::Jak2) {
+    if (!fc && env.version >= GameVersion::Jak2) {
       auto ic = get_goal_integer_constant(in, env);
       if (ic) {
         ASSERT((s64)*ic == (s64)(s32)*ic);
@@ -486,6 +489,38 @@ Form* cast_form(Form* in,
   return pool.form<CastElement>(new_type, in);
 }
 
+Form* cast_form_from(Form* in,
+                     const TypeSpec& old_type,
+                     const TypeSpec& new_type,
+                     FormPool& pool,
+                     const Env& env,
+                     bool tc_pass = false) {
+  auto& ts = env.dts->ts;
+
+  // sometimes, accessing a field is a no-op but changes the type. For example, accessing an inlined
+  // structure at the start of a structure. To detect this, look up all the possible derefs with no
+  // deref or offset, then find the highest scoring one that is the right type.
+  FieldReverseLookupInput lookup_input;
+  lookup_input.deref = std::nullopt;
+  lookup_input.offset = 0;
+  lookup_input.stride = 0;
+  lookup_input.base_type = old_type;
+  auto lookup_result = ts.reverse_field_multi_lookup(lookup_input);
+  if (lookup_result.success) {
+    for (auto& result : lookup_result.results) {
+      if (result.result_type == new_type) {
+        // it's a match!
+        auto form = pool.form<DerefElement>(in, result.addr_of, to_tokens(result.tokens));
+        form->try_as_element<DerefElement>()->inline_nested();
+        return form;
+      }
+    }
+  }
+
+  // fall back to normal casts.
+  return cast_form(in, new_type, pool, env, tc_pass);
+}
+
 /*!
  * Pop each variable in the input list into a form. The variables should be given in the order
  * they are evaluated in the source. It is safe to put the result of these in the same expression.
@@ -657,7 +692,7 @@ Form* make_cast_if_needed(Form* in,
     return try_cast_simplify(in, TypeSpec("time-frame"), pool, env, true);
   }
 
-  return cast_form(in, out_type, pool, env);
+  return cast_form_from(in, in_type, out_type, pool, env);
 }
 
 std::vector<Form*> make_casts_if_needed(const std::vector<Form*>& in,
@@ -962,7 +997,7 @@ FormElement* make_and_compact_math_op(Form* arg0,
 /*!
  * Update a two-argument form that uses two floats.
  * This is for operations like * and + that can be nested
- * (* (* a b)) -> (* a b c)
+ * (* (* a b) c) -> (* a b c)
  * Note that we only apply this to the _first_ argument to keep the order of operations the same.
  */
 void SimpleExpressionElement::update_from_stack_float_2_nestable(const Env& env,
@@ -1494,7 +1529,13 @@ void SimpleExpressionElement::update_from_stack_force_ui_2(const Env& env,
                                                            FormStack& stack,
                                                            std::vector<FormElement*>* result,
                                                            bool allow_side_effects) {
-  auto arg0_u = is_uint_type(env, m_my_idx, m_expr.get_arg(0).var());
+  bool arg0_constant = !m_expr.get_arg(0).is_var();
+  bool arg0_u;
+  if (!arg0_constant) {
+    arg0_u = is_uint_type(env, m_my_idx, m_expr.get_arg(0).var());
+  } else {
+    arg0_u = m_expr.get_arg(0).is_int();
+  }
   bool arg1_u = true;
   bool arg1_reg = m_expr.get_arg(1).is_var();
   if (arg1_reg) {
@@ -1504,12 +1545,17 @@ void SimpleExpressionElement::update_from_stack_force_ui_2(const Env& env,
   }
 
   std::vector<Form*> args;
-  if (arg1_reg) {
-    args = pop_to_forms({m_expr.get_arg(0).var(), m_expr.get_arg(1).var()}, env, pool, stack,
-                        allow_side_effects);
+  if (arg0_constant) {
+    args = pop_to_forms({m_expr.get_arg(1).var()}, env, pool, stack, allow_side_effects);
+    args.push_back(pool.form<SimpleAtomElement>(m_expr.get_arg(0)));
   } else {
-    args = pop_to_forms({m_expr.get_arg(0).var()}, env, pool, stack, allow_side_effects);
-    args.push_back(pool.form<SimpleAtomElement>(m_expr.get_arg(1)));
+    if (arg1_reg) {
+      args = pop_to_forms({m_expr.get_arg(0).var(), m_expr.get_arg(1).var()}, env, pool, stack,
+                          allow_side_effects);
+    } else {
+      args = pop_to_forms({m_expr.get_arg(0).var()}, env, pool, stack, allow_side_effects);
+      args.push_back(pool.form<SimpleAtomElement>(m_expr.get_arg(1)));
+    }
   }
 
   if (!arg0_u) {
@@ -1591,7 +1637,8 @@ void SimpleExpressionElement::update_from_stack_vector_plus_minus_cross(
   for (int i = 0; i < 3; i++) {
     auto arg_type = env.get_types_before_op(m_my_idx).get(m_expr.get_arg(i).var().reg());
     if (arg_type.typespec() != TypeSpec("vector")) {
-      popped_args.at(i) = cast_form(popped_args.at(i), TypeSpec("vector"), pool, env);
+      popped_args.at(i) =
+          cast_form_from(popped_args.at(i), arg_type.typespec(), TypeSpec("vector"), pool, env);
     }
   }
 
@@ -1615,7 +1662,8 @@ void SimpleExpressionElement::update_from_stack_vector_plus_float_times(
     auto arg_type = env.get_types_before_op(m_my_idx).get(m_expr.get_arg(i).var().reg());
     TypeSpec desired_type(i == 3 ? "float" : "vector");
     if (arg_type.typespec() != desired_type) {
-      popped_args.at(i) = cast_form(popped_args.at(i), desired_type, pool, env);
+      popped_args.at(i) =
+          cast_form_from(popped_args.at(i), arg_type.typespec(), desired_type, pool, env);
     }
   }
 
@@ -1640,7 +1688,8 @@ void SimpleExpressionElement::update_from_stack_vector_float_product(
     auto arg_type = env.get_types_before_op(m_my_idx).get(m_expr.get_arg(i).var().reg());
     TypeSpec desired_type(i == 2 ? "float" : "vector");
     if (arg_type.typespec() != desired_type) {
-      popped_args.at(i) = cast_form(popped_args.at(i), desired_type, pool, env);
+      popped_args.at(i) =
+          cast_form_from(popped_args.at(i), arg_type.typespec(), desired_type, pool, env);
     }
   }
 
@@ -1666,7 +1715,8 @@ void SimpleExpressionElement::update_from_stack_vectors_in_common(FixedOperatorK
   for (int i = 0; i < m_expr.args(); i++) {
     auto arg_type = env.get_types_before_op(m_my_idx).get(m_expr.get_arg(i).var().reg());
     if (arg_type.typespec() != TypeSpec("vector")) {
-      popped_args.at(i) = cast_form(popped_args.at(i), TypeSpec("vector"), pool, env);
+      popped_args.at(i) =
+          cast_form_from(popped_args.at(i), arg_type.typespec(), TypeSpec("vector"), pool, env);
     }
   }
 
@@ -2513,6 +2563,10 @@ void SimpleExpressionElement::update_from_stack(const Env& env,
       update_from_stack_vector_plus_minus_cross(FixedOperatorKind::VECTOR_CROSS, env, pool, stack,
                                                 result, allow_side_effects);
       break;
+    case SimpleExpression::Kind::VECTOR_XYZ_PRODUCT:
+      update_from_stack_vector_plus_minus_cross(FixedOperatorKind::VECTOR_XYZ_PRODUCT, env, pool,
+                                                stack, result, allow_side_effects);
+      break;
     case SimpleExpression::Kind::VECTOR_FLOAT_PRODUCT:
       update_from_stack_vector_float_product(env, pool, stack, result, allow_side_effects);
       break;
@@ -2610,12 +2664,89 @@ void SetVarElement::push_to_stack(const Env& env, FormPool& pool, FormStack& sta
         }
       }
     }
+
+    // (* 0.125 b) -> (/ b 8)
+    // adds explicit cast b to float if necessary
+    auto src_as_ge = dynamic_cast<GenericElement*>(m_src->back());
+    if (src_as_ge) {
+      auto mr = match(Matcher::op_fixed(FixedOperatorKind::MULTIPLICATION,
+                                        {Matcher::any_single(0), Matcher::any(1)}),
+                      m_src);
+      if (mr.matched && std::abs(mr.maps.floats.at(0)) < 1 && mr.maps.floats.at(0) != 0) {
+        auto inverse_mult = mr.maps.floats.at(0);
+        float divisor_num = 1.0f / inverse_mult;
+
+        // note: float inaccuracies lead to convergent values, so we can do this safely
+        if ((int)divisor_num != divisor_num && 1.0f / std::roundf(divisor_num) == inverse_mult) {
+          lg::debug("managed to round divisor - cool !! {} -> {} ({})", divisor_num,
+                    std::roundf(divisor_num), inverse_mult);
+          divisor_num = std::roundf(divisor_num);
+        }
+
+        int divisor_int = (int)divisor_num;
+        bool integer = divisor_int == divisor_num;
+        if (integer) {
+          auto elt = mr.maps.forms.at(1)->try_as_single_element();
+          auto b_as_simple = dynamic_cast<SimpleExpressionElement*>(elt);
+          // WARNING : there is an assumption here that derefs DO NOT have implicit casts!
+          auto b_as_deref = dynamic_cast<DerefElement*>(elt);
+          if (b_as_deref ||
+              (b_as_simple && b_as_simple->expr().kind() == SimpleExpression::Kind::IDENTITY)) {
+            // TODO check if op is float, cast if so
+            Form* divisor = nullptr;
+            if (divisor_num == 4096.0f) {
+              divisor = pool.form<ConstantTokenElement>("METER_LENGTH");
+            } else if (integer && divisor_int % 4096 == 0) {
+              divisor = pool.form<GenericElement>(
+                  GenericOperator::make_function(pool.form<ConstantTokenElement>("meters")),
+                  pool.form<SimpleAtomElement>(divisor_int / 4096, true));
+            } else if (integer && divisor_int % 2048 == 0) {
+              divisor = pool.form<GenericElement>(
+                  GenericOperator::make_function(pool.form<ConstantTokenElement>("meters")),
+                  pool.form<ConstantFloatElement>(divisor_num / (float)METER_LENGTH));
+            } else if (integer) {
+              divisor = pool.form<SimpleAtomElement>(divisor_int, true);
+            } else {
+              // this shouldn't run because of the checks before.
+              divisor = pool.form<ConstantFloatElement>(divisor_num);
+            }
+            if (divisor) {
+              if (b_as_deref || (b_as_simple->expr().is_var() &&
+                                 env.get_types_before_op(b_as_simple->expr().var().idx())
+                                         .get(b_as_simple->expr().var().reg())
+                                         .typespec() == TypeSpec("float"))) {
+                *m_src->back_ref() = pool.alloc_element<GenericElement>(
+                    GenericOperator::make_fixed(FixedOperatorKind::DIVISION), mr.maps.forms.at(1),
+                    divisor);
+              } else {
+                *m_src->back_ref() = pool.alloc_element<GenericElement>(
+                    GenericOperator::make_fixed(FixedOperatorKind::DIVISION),
+                    pool.form<CastElement>(TypeSpec("float"), mr.maps.forms.at(1), true), divisor);
+              }
+              m_src->back()->parent_form = m_src;
+            }
+          }
+        }
+      }
+    }
   }
 
   stack.push_value_to_reg(m_dst, m_src, true, m_src_type, m_var_info);
   for (auto x : m_src->elts()) {
     ASSERT(x->parent_form == m_src);
   }
+}
+
+FormElement* SetFormFormElement::make_set_time(const Env& /*env*/,
+                                               FormPool& pool,
+                                               FormStack& /*stack*/) {
+  auto matcher = match(
+      Matcher::op(GenericOpMatcher::func(Matcher::constant_token("current-time")), {}), m_src);
+  if (matcher.matched) {
+    return pool.alloc_element<GenericElement>(
+        GenericOperator::make_function(pool.form<ConstantTokenElement>("set-time!")), m_dst);
+  }
+  return nullptr;
 }
 
 void SetFormFormElement::push_to_stack(const Env& env, FormPool& pool, FormStack& stack) {
@@ -2667,16 +2798,16 @@ void SetFormFormElement::push_to_stack(const Env& env, FormPool& pool, FormStack
   typedef struct {
     FixedOperatorKind kind;
     FixedOperatorKind inplace_kind;
-    int inplace_arg;
+    std::vector<int> inplace_arg;
   } InplaceOpInfo;
 
   const static InplaceOpInfo in_place_ops[] = {
-      {FixedOperatorKind::ADDITION, FixedOperatorKind::ADDITION_IN_PLACE, 0},
-      {FixedOperatorKind::ADDITION_PTR, FixedOperatorKind::ADDITION_PTR_IN_PLACE, 0},
-      {FixedOperatorKind::LOGAND, FixedOperatorKind::LOGAND_IN_PLACE, 0},
-      {FixedOperatorKind::LOGIOR, FixedOperatorKind::LOGIOR_IN_PLACE, 0},
-      {FixedOperatorKind::LOGCLEAR, FixedOperatorKind::LOGCLEAR_IN_PLACE, 0},
-      {FixedOperatorKind::LOGXOR, FixedOperatorKind::LOGXOR_IN_PLACE, 0}};
+      {FixedOperatorKind::ADDITION, FixedOperatorKind::ADDITION_IN_PLACE, {0, 1}},
+      {FixedOperatorKind::ADDITION_PTR, FixedOperatorKind::ADDITION_PTR_IN_PLACE, {0, 1}},
+      {FixedOperatorKind::LOGAND, FixedOperatorKind::LOGAND_IN_PLACE, {0, 1}},
+      {FixedOperatorKind::LOGIOR, FixedOperatorKind::LOGIOR_IN_PLACE, {0, 1}},
+      {FixedOperatorKind::LOGCLEAR, FixedOperatorKind::LOGCLEAR_IN_PLACE, {0, 1}},
+      {FixedOperatorKind::LOGXOR, FixedOperatorKind::LOGXOR_IN_PLACE, {0, 1}}};
 
   typedef struct {
     std::string orig_name;
@@ -2685,6 +2816,12 @@ void SetFormFormElement::push_to_stack(const Env& env, FormPool& pool, FormStack
   } InplaceCallInfo;
 
   const static InplaceCallInfo in_place_calls[] = {{"seek", "seek!", 0}, {"seekl", "seekl!", 0}};
+
+  auto as_set_time = make_set_time(env, pool, stack);
+  if (as_set_time) {
+    stack.push_form_element(as_set_time, true);
+    return;
+  }
 
   auto src_as_generic = m_src->try_as_element<GenericElement>();
   if (src_as_generic) {
@@ -2721,12 +2858,18 @@ void SetFormFormElement::push_to_stack(const Env& env, FormPool& pool, FormStack
       for (const auto& op_info : in_place_ops) {
         if (src_as_generic->op().is_fixed(op_info.kind)) {
           auto dst_form = m_dst->to_form(env);
-          auto add_form_0 = src_as_generic->elts().at(op_info.inplace_arg)->to_form(env);
 
-          if (dst_form == add_form_0) {
-            src_as_generic->op() = GenericOperator::make_fixed(op_info.inplace_kind);
-            stack.push_form_element(src_as_generic, true);
-            return;
+          for (int inplace_arg : op_info.inplace_arg) {
+            auto add_form_0 = src_as_generic->elts().at(inplace_arg)->to_form(env);
+
+            if (dst_form == add_form_0) {
+              if (inplace_arg != 0) {
+                std::swap(src_as_generic->elts().at(0), src_as_generic->elts().at(1));
+              }
+              src_as_generic->op() = GenericOperator::make_fixed(op_info.inplace_kind);
+              stack.push_form_element(src_as_generic, true);
+              return;
+            }
           }
         }
       }
@@ -2826,7 +2969,7 @@ bool try_to_rewrite_vector_inline_ctor(const Env& env,
       token_matchers = {DerefTokenMatcher::string("quad")};
     }
 
-    if (env.version == GameVersion::Jak2) {
+    if (env.version >= GameVersion::Jak2) {
       token_matchers = {DerefTokenMatcher::string("quad")};
     }
 
@@ -2861,6 +3004,121 @@ bool try_to_rewrite_vector_inline_ctor(const Env& env,
   return false;
 }
 
+bool try_to_rewrite_matrix_inline_copy(const Env& env, FormPool& pool, FormStack& stack) {
+  if (env.func->name() == "(method 63 collide-shape-moving)") {
+    return false;
+  }
+  auto matrix_entries =
+      stack.try_getting_active_stack_entries({true, true, true, true, false, false, false, false});
+  if (matrix_entries) {
+    // first, check the loads. they should be something like source = (-> MAT vec quad)
+    // MAT should always be a variable
+    const char* names[] = {"rvec", "uvec", "fvec", "trans"};
+
+    std::vector<RegisterAccess> load_src_ras, store_dest_ras, store_src_ras;
+    for (int i = 0; i < 4; i++) {
+      auto deref_matcher =
+          Matcher::deref(Matcher::any_reg(0), false,
+                         {DerefTokenMatcher::string(names[i]), DerefTokenMatcher::string("quad")});
+      auto mr = match(deref_matcher, matrix_entries->at(i).source, &env);
+      if (!mr.matched) {
+        return false;
+      }
+      load_src_ras.push_back(mr.maps.regs.at(0).value());
+    }
+
+    // check the stores
+    for (int i = 4; i < 8; i++) {
+      Matcher matcher = Matcher::set(Matcher::deref(Matcher::any_reg(0), false,
+                                                    {DerefTokenMatcher::string(names[i - 4]),
+                                                     DerefTokenMatcher::string("quad")}),
+                                     Matcher::any_reg(1));
+      auto mr = match(matcher, matrix_entries->at(i).elt, &env);
+      if (!mr.matched) {
+        return false;
+      }
+      store_dest_ras.push_back(mr.maps.regs.at(0).value());
+      store_src_ras.push_back(mr.maps.regs.at(1).value());
+    }
+
+    // check loads are all loading from the same matrix
+    for (int i = 1; i < 4; i++) {
+      if (load_src_ras.at(i).reg() != load_src_ras.at(0).reg()) {
+        return false;
+      }
+    }
+
+    // check stores are all storing to the same matrix
+    for (int i = 1; i < 4; i++) {
+      if (store_dest_ras.at(i).reg() != store_dest_ras.at(0).reg()) {
+        return false;
+      }
+    }
+
+    // check temps are consistent
+    for (int i = 0; i < 4; i++) {
+      if (store_src_ras.at(i).reg() != matrix_entries->at(i).destination.value().reg()) {
+        return false;
+      }
+    }
+
+    // check types
+    if (env.get_variable_type(load_src_ras.at(0), true) != TypeSpec("matrix")) {
+      return false;
+    }
+
+    if (env.get_variable_type(store_dest_ras.at(0), true) != TypeSpec("matrix")) {
+      return false;
+    }
+
+    stack.pop(8);
+    auto* menv = const_cast<Env*>(&env);
+    for (int i = 0; i < 4; i++) {
+      menv->disable_use(store_dest_ras.at(i));
+    }
+
+    auto src_repopped = stack.pop_reg(load_src_ras.at(0), {}, env, true);
+    if (!src_repopped) {
+      // lg::info("repop src failed!!");
+      src_repopped = var_to_form(load_src_ras.at(0), pool);
+    } else {
+      // lg::info(" popped src: {}", src_repopped->to_string(env));
+    }
+
+    // src_repopped = matrix_entries->at(0).source;
+    bool found = false;
+    RegisterAccess ra;
+    auto dst_repopped = stack.pop_reg(store_dest_ras.at(0).reg(), {}, env, true, -1, &ra, &found);
+    if (!dst_repopped) {
+      // lg::info("repop dst failed!!");
+      dst_repopped = var_to_form(store_dest_ras.at(0), pool);
+    } else {
+      ASSERT(found);
+      // lg::info(" popped dst: {} {} {}", dst_repopped->to_string(env), ra.reg().to_string(),
+      //          ra.mode() == AccessMode::WRITE);
+    }
+
+    if (found) {
+      stack.push_value_to_reg(
+          ra,
+          pool.form<GenericElement>(
+              GenericOperator::make_function(pool.form<ConstantTokenElement>("matrix-copy!")),
+              std::vector<Form*>{dst_repopped, src_repopped}),
+          true, TypeSpec("matrix"));
+    } else {
+      stack.push_form_element(
+          pool.alloc_element<GenericElement>(
+              GenericOperator::make_function(pool.form<ConstantTokenElement>("matrix-copy!")),
+              std::vector<Form*>{dst_repopped, src_repopped}),
+          true);
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
 bool try_to_rewrite_matrix_inline_ctor(const Env& env, FormPool& pool, FormStack& stack) {
   // now, let's check for a matrix initialization.
   auto matrix_entries = stack.try_getting_active_stack_entries({true, false, false, false, false});
@@ -2880,54 +3138,79 @@ bool try_to_rewrite_matrix_inline_ctor(const Env& env, FormPool& pool, FormStack
 
     // zeroing the rows:
     std::vector<RegisterAccess> write_vars;
-    if (env.version == GameVersion::Jak1) {
-      for (int i = 0; i < 4; i++) {
-        auto elt = matrix_entries->at(i + 1).elt;
+    switch (env.version) {
+      case GameVersion::Jak1: {
+        for (int i = 0; i < 4; i++) {
+          auto elt = matrix_entries->at(i + 1).elt;
 
-        auto matcher = Matcher::set(
-            Matcher::deref(Matcher::any_reg(0), false,
-                           {DerefTokenMatcher::string("vector"), DerefTokenMatcher::integer(i),
-                            DerefTokenMatcher::string("quad")}),
-            Matcher::cast("uint128", Matcher::integer(0)));
-
-        auto mr = match(matcher, elt);
-        if (mr.matched) {
-          if (var_name != env.get_variable_name(*mr.maps.regs.at(0))) {
-            return false;
-          }
-          write_vars.push_back(*mr.maps.regs.at(0));
-        } else {
-          return false;
-        }
-      }
-    } else {
-      for (int i = 0; i < 4; i++) {
-        auto elt = matrix_entries->at(i + 1).elt;
-
-        Matcher matcher;
-        if (i == 3) {
-          matcher = Matcher::set(Matcher::deref(Matcher::any_reg(0), false,
-                                                {DerefTokenMatcher::string("trans"),
-                                                 DerefTokenMatcher::string("quad")}),
-                                 Matcher::cast("uint128", Matcher::integer(0)));
-
-        } else {
-          matcher = Matcher::set(
+          auto matcher = Matcher::set(
               Matcher::deref(Matcher::any_reg(0), false,
-                             {DerefTokenMatcher::string("quad"), DerefTokenMatcher::integer(i)}),
+                             {DerefTokenMatcher::string("vector"), DerefTokenMatcher::integer(i),
+                              DerefTokenMatcher::string("quad")}),
               Matcher::cast("uint128", Matcher::integer(0)));
-        }
 
-        auto mr = match(matcher, elt);
-        if (mr.matched) {
-          if (var_name != env.get_variable_name(*mr.maps.regs.at(0))) {
+          auto mr = match(matcher, elt);
+          if (mr.matched) {
+            if (var_name != env.get_variable_name(*mr.maps.regs.at(0))) {
+              return false;
+            }
+            write_vars.push_back(*mr.maps.regs.at(0));
+          } else {
             return false;
           }
-          write_vars.push_back(*mr.maps.regs.at(0));
-        } else {
-          return false;
         }
-      }
+      } break;
+      case GameVersion::Jak2: {
+        for (int i = 0; i < 4; i++) {
+          auto elt = matrix_entries->at(i + 1).elt;
+
+          Matcher matcher;
+          if (i == 3) {
+            matcher = Matcher::set(Matcher::deref(Matcher::any_reg(0), false,
+                                                  {DerefTokenMatcher::string("trans"),
+                                                   DerefTokenMatcher::string("quad")}),
+                                   Matcher::cast("uint128", Matcher::integer(0)));
+
+          } else {
+            matcher = Matcher::set(
+                Matcher::deref(Matcher::any_reg(0), false,
+                               {DerefTokenMatcher::string("quad"), DerefTokenMatcher::integer(i)}),
+                Matcher::cast("uint128", Matcher::integer(0)));
+          }
+
+          auto mr = match(matcher, elt);
+          if (mr.matched) {
+            if (var_name != env.get_variable_name(*mr.maps.regs.at(0))) {
+              return false;
+            }
+            write_vars.push_back(*mr.maps.regs.at(0));
+          } else {
+            return false;
+          }
+        }
+      } break;
+      case GameVersion::Jak3: {
+        for (int i = 0; i < 4; i++) {
+          auto elt = matrix_entries->at(i + 1).elt;
+
+          const char* names[] = {"rvec", "uvec", "fvec", "trans"};
+
+          Matcher matcher = Matcher::set(Matcher::deref(Matcher::any_reg(0), false,
+                                                        {DerefTokenMatcher::string(names[i]),
+                                                         DerefTokenMatcher::string("quad")}),
+                                         Matcher::cast("uint128", Matcher::integer(0)));
+
+          auto mr = match(matcher, elt);
+          if (mr.matched) {
+            if (var_name != env.get_variable_name(*mr.maps.regs.at(0))) {
+              return false;
+            }
+            write_vars.push_back(*mr.maps.regs.at(0));
+          } else {
+            return false;
+          }
+        }
+      } break;
     }
 
     // success!
@@ -2947,6 +3230,70 @@ bool try_to_rewrite_matrix_inline_ctor(const Env& env, FormPool& pool, FormStack
   return false;
 }
 
+bool is_deref_to_quad(DerefElement* deref) {
+  return deref && !deref->is_addr_of() && !deref->tokens().empty() &&
+         deref->tokens().back().is_field_name("quad");
+}
+
+Form* pop_last_deref_token(Form* form) {
+  auto deref = form->try_as_element<DerefElement>();
+  ASSERT(deref);
+  if (deref->tokens().size() == 1) {
+    return deref->base();
+  } else {
+    deref->tokens().pop_back();
+    return form;
+  }
+}
+
+FormElement* try_to_rewrite_vector_copy(Form* dst,
+                                        const TypeSpec& dst_type,
+                                        Form* src,
+                                        const TypeSpec& src_type,
+                                        FormPool& pool,
+                                        const Env& env) {
+  if (env.func->name() == "vector-copy!") {
+    return nullptr;
+  }
+
+  if (dst && src) {
+    // check types
+    if (dst_type != TypeSpec("vector")) {
+      return nullptr;
+    }
+
+    // kinda sus - we really want to check the place where this was loaded...
+    if (src_type != TypeSpec("uint128")) {
+      return nullptr;
+    }
+
+    auto* dst_deref = dst->try_as_element<DerefElement>();
+    auto* src_deref = src->try_as_element<DerefElement>();
+    if (!dst_deref) {
+      return nullptr;
+    }
+
+    if (!src_deref) {
+      return nullptr;
+    }
+
+    if (!is_deref_to_quad(dst_deref)) {
+      return nullptr;
+    }
+
+    if (!is_deref_to_quad(src_deref)) {
+      return nullptr;
+    }
+
+    auto ret = pool.alloc_element<GenericElement>(
+        GenericOperator::make_function(pool.form<ConstantTokenElement>("vector-copy!")),
+        std::vector<Form*>{pop_last_deref_token(dst), pop_last_deref_token(src)});
+    // lg::info("success: {}\n", ret->to_string(env));
+    return ret;
+  }
+  return nullptr;
+}
+
 }  // namespace
 
 void StorePlainDeref::push_to_stack(const Env& env, FormPool& pool, FormStack& stack) {
@@ -2963,14 +3310,27 @@ void StorePlainDeref::push_to_stack(const Env& env, FormPool& pool, FormStack& s
     if (size() == 16) {
       std::swap(popped.at(0), popped.at(1));
     }
-    m_dst->try_as_element<DerefElement>()->set_base(
-        make_optional_cast(m_dst_cast_type, popped.at(1), pool, env));
+    auto dst_deref = m_dst->try_as_element<DerefElement>();
+    dst_deref->set_base(make_optional_cast(m_dst_cast_type, popped.at(1), pool, env));
     m_dst->mark_popped();
-    m_dst->try_as_element<DerefElement>()->inline_nested();
-    auto fr = pool.alloc_element<SetFormFormElement>(
-        m_dst, make_optional_cast(m_src_cast_type, popped.at(0), pool, env));
-    // so the bitfield set check can run
-    fr->mark_popped();
+    dst_deref->inline_nested();
+
+    FormElement* fr = nullptr;
+
+    // hack: for now only do this on Jak 3
+    if (size() == 16 && env.version == GameVersion::Jak3) {
+      fr = try_to_rewrite_vector_copy(
+          m_dst, env.get_variable_type(m_base_var, true), popped.at(0),
+          m_src_cast_type.value_or(env.get_variable_type(m_expr.var(), true)), pool, env);
+    }
+
+    if (!fr) {
+      fr = pool.alloc_element<SetFormFormElement>(
+          m_dst, make_optional_cast(m_src_cast_type, popped.at(0), pool, env));
+      // so the bitfield set check can run
+      fr->mark_popped();
+    }
+
     fr->push_to_stack(env, pool, stack);
   } else {
     auto vars = std::vector<RegisterAccess>({m_base_var});
@@ -2989,7 +3349,9 @@ void StorePlainDeref::push_to_stack(const Env& env, FormPool& pool, FormStack& s
 
   if (!try_to_rewrite_matrix_inline_ctor(env, pool, stack)) {
     if (!try_to_rewrite_vector_inline_ctor(env, pool, stack, "vector")) {
-      try_to_rewrite_vector_inline_ctor(env, pool, stack, "quaternion");
+      if (!try_to_rewrite_vector_inline_ctor(env, pool, stack, "quaternion")) {
+        try_to_rewrite_matrix_inline_copy(env, pool, stack);
+      }
     }
   }
 }
@@ -3228,8 +3590,8 @@ void FunctionCallElement::update_from_stack(const Env& env,
 
       auto desired_arg_type = function_type.get_arg(arg_id);
       if (env.dts->should_attempt_cast_simplify(desired_arg_type, actual_arg_type)) {
-        arg_forms.push_back(cast_form(val, desired_arg_type, pool, env,
-                                      env.dts->ts.tc(desired_arg_type, actual_arg_type)));
+        arg_forms.push_back(cast_form_from(val, actual_arg_type, desired_arg_type, pool, env,
+                                           env.dts->ts.tc(desired_arg_type, actual_arg_type)));
       } else {
         arg_forms.push_back(val);
       }
@@ -3260,6 +3622,36 @@ void FunctionCallElement::update_from_stack(const Env& env,
         GenericOperator::make_function(pool.form<ConstantTokenElement>("go")), arg_forms);
     result->push_back(go_form);
     return;
+  }
+
+  // tpage and texture macros
+  {
+    auto func = Matcher::symbol("lookup-texture-by-id");
+    auto func_fast = Matcher::symbol("lookup-texture-by-id-fast");
+    auto mr = match(func, unstacked.at(0));
+    auto mr_fast = match(func_fast, unstacked.at(0));
+    if (mr.matched || mr_fast.matched) {
+      auto tex_id = Matcher::any_integer(0);
+      auto mr2 = match(tex_id, unstacked.at(1));
+      if (mr2.matched) {
+        auto id = mr2.maps.ints.at(0);
+        u16 tpage = (id & 0xfff00000) >> 20;
+        u16 idx = (id & 0x000fff00) >> 8;
+        auto fixed_id = tpage << 16 | idx;
+        if (!env.dts->textures.empty() &&
+            env.dts->textures.find(fixed_id) != env.dts->textures.end()) {
+          std::vector<Form*> macro_args;
+          auto tex = env.dts->textures.at(fixed_id);
+          macro_args.push_back(pool.form<ConstantTokenElement>(tex.name));
+          macro_args.push_back(pool.form<ConstantTokenElement>(tex.tpage_name));
+          auto macro = pool.alloc_element<GenericElement>(
+              GenericOperator::make_function(pool.form<ConstantTokenElement>("get-texture")),
+              macro_args);
+          result->push_back(macro);
+          return;
+        }
+      }
+    }
   }
 
   {
@@ -3307,11 +3699,27 @@ void FunctionCallElement::update_from_stack(const Env& env,
             ASSERT(head_obj.is_symbol("get-art-by-name-method"));
             head = pool.form<ConstantTokenElement>("get-art-by-name");
           } else {
-            if (head_obj.is_symbol() &&
-                tp_type.method_from_type().base_type() == "setting-control" &&
-                arg_forms.at(0)->to_form(env).is_symbol("*setting-control*") &&
-                arg_forms.size() > 1) {
+            if (head_obj.is_symbol("set-subtask-hook!")) {
+              // change the integer argument to a constant.
+              auto arg2o = arg_forms.at(2)->to_form(env);
+              if (arg2o.is_int()) {
+                int hook = arg2o.as_int();
+                static const std::vector<std::string> hook_names = {
+                    "TASK_MANAGER_INIT_HOOK",     "TASK_MANAGER_CLEANUP_HOOK",
+                    "TASK_MANAGER_UPDATE_HOOK",   "TASK_MANAGER_CODE_HOOK",
+                    "TASK_MANAGER_COMPLETE_HOOK", "TASK_MANAGER_FAIL_HOOK",
+                    "TASK_MANAGER_EVENT_HOOK"};
+                if (hook >= 0 && hook < (int)hook_names.size()) {
+                  arg_forms.at(2) = pool.alloc_single_element_form<ConstantTokenElement>(
+                      arg_forms.at(2)->parent_element, hook_names.at(hook));
+                }
+              }
+            } else if (head_obj.is_symbol() &&
+                       tp_type.method_from_type().base_type() == "setting-control" &&
+                       arg_forms.at(0)->to_form(env).is_symbol("*setting-control*") &&
+                       arg_forms.size() > 1) {
               auto arg1_reg = get_form_reg_acc(arg_forms.at(1));
+              bool has_params = true;
               if (arg1_reg && arg1_reg->reg().is_s6()) {
                 std::string new_head;
                 if (head_obj.is_symbol("add-setting")) {
@@ -3320,6 +3728,7 @@ void FunctionCallElement::update_from_stack(const Env& env,
                   new_head = "set-setting!";
                 } else if (head_obj.is_symbol("remove-setting")) {
                   new_head = "remove-setting!";
+                  has_params = false;
                 }
                 if (!new_head.empty()) {
                   auto oldp = head->parent_element;
@@ -3327,30 +3736,85 @@ void FunctionCallElement::update_from_stack(const Env& env,
                   head->parent_element = oldp;
                   arg_forms.erase(arg_forms.begin());
                   arg_forms.erase(arg_forms.begin());
-                  if (arg_forms.size() > 3) {
+                  if (has_params) {
+                    auto argset = arg_forms.at(0)->to_string(env);
+                    argset = argset.substr(1);
+                    auto argsym = arg_forms.at(1)->to_string(env);
+                    // convert the float param
+                    if (env.version >= GameVersion::Jak2) {
+                      static const std::unordered_set<std::string> use_degrees_settings = {
+                          "matrix-blend-max-angle",
+                          "fov",
+                      };
+                      static const std::unordered_set<std::string> use_meters_settings = {
+                          "string-spline-max-move",
+                          "string-spline-max-move-player",
+                          "string-spline-accel",
+                          "string-spline-accel-player",
+                          "string-max-length",
+                          "string-min-length",
+                          "string-max-height",
+                          "string-min-height",
+                          "gun-max-height",
+                          "gun-min-height",
+                          "head-offset",
+                          "foot-offset",
+                          "extra-follow-height",
+                          "target-height",
+                      };
+                      auto argf = arg_forms.at(2);
+                      arg_forms.at(2) = try_cast_simplify(argf, TypeSpec("float"), pool, env, true);
+                      if (argsym != "'rel") {
+                        if (use_degrees_settings.find(argset) != use_degrees_settings.end()) {
+                          arg_forms.at(2) = try_cast_simplify(arg_forms.at(2), TypeSpec("degrees"),
+                                                              pool, env, true);
+                        } else if (use_meters_settings.find(argset) != use_meters_settings.end()) {
+                          arg_forms.at(2) = try_cast_simplify(arg_forms.at(2), TypeSpec("meters"),
+                                                              pool, env, true);
+                        }
+                      }
+                      arg_forms.at(2)->parent_element = argf->parent_element;
+                    }
+                    // convert the int param
+                    static const std::unordered_map<std::string, std::string> use_bitenum_settings =
+                        {
+                            {"process-mask", "process-mask"},
+                            {"features", "game-feature"},
+                            {"slave-options", "cam-slave-options"},
+                            {"minimap", "minimap-flag"},
+                            {"task-mask", "task-mask"},
+                        };
+                    static const std::unordered_map<std::string, std::string> use_enum_settings = {
+                        {"sound-flava", "music-flava"},
+                        {"exclusive-task", "game-task"},
+                    };
                     auto argi = arg_forms.at(3);
                     auto argi_o = argi->to_form(env);
                     if (argi_o.is_int()) {
-                      auto argset = arg_forms.at(0)->to_string(env);
-                      if (argset == "'process-mask") {
-                        auto en = env.dts->ts.try_enum_lookup("process-mask");
+                      if (use_bitenum_settings.find(argset) != use_bitenum_settings.end()) {
+                        auto en = env.dts->ts.try_enum_lookup(use_bitenum_settings.at(argset));
                         if (en) {
-                          arg_forms.at(3) =
-                              cast_to_bitfield_enum(env.dts->ts.try_enum_lookup("process-mask"),
-                                                    pool, env, argi_o.as_int());
+                          arg_forms.at(3) = cast_to_bitfield_enum(en, pool, env, argi_o.as_int());
                         }
-                      } else if (argset == "'sound-flava") {
-                        auto en = env.dts->ts.try_enum_lookup("music-flava");
+                      } else if (use_enum_settings.find(argset) != use_enum_settings.end()) {
+                        auto en = env.dts->ts.try_enum_lookup(use_enum_settings.at(argset));
                         if (en) {
-                          arg_forms.at(3) =
-                              cast_to_int_enum(env.dts->ts.try_enum_lookup("music-flava"), pool,
-                                               env, argi_o.as_int());
+                          arg_forms.at(3) = cast_to_int_enum(en, pool, env, argi_o.as_int());
                         }
                       }
                     }
                     arg_forms.at(3)->parent_element = argi->parent_element;
                   }
                 }
+              }
+            } else if (env.func->process_stack_size > 0 && head_obj.is_symbol("stack-size-set!")) {
+              // override process stack size
+              auto old_size = arg_forms.at(1)->to_form(env);
+              if (old_size.is_int()) {
+                arg_forms.at(1) = pool.alloc_single_element_form<ConstantTokenElement>(
+                    arg_forms.at(1)->parent_element, std::to_string(env.func->process_stack_size));
+                env.func->warnings.info("Process stack size was changed from {} to {}",
+                                        old_size.as_int(), env.func->process_stack_size);
               }
             }
           }
@@ -3442,12 +3906,12 @@ void FunctionCallElement::update_from_stack(const Env& env,
           }
           auto elt_group = arg_forms.at(5)->try_as_element<GenericElement>();
           if (elt_group && elt_group->op().is_func() &&
-              elt_group->op().func()->to_form(env).is_symbol("sound-group") &&
-              elt_group->elts().size() == 1) {
+              elt_group->op().func()->to_form(env).is_symbol("sound-group")) {
             Form* so_group_f = nullptr;
-            if (!elt_group->elts().at(0)->to_form(env).is_symbol("sfx")) {
+            if (elt_group->elts().size() == 1 &&
+                !elt_group->elts().at(0)->to_form(env).is_symbol("sfx")) {
               so_group_f = pool.form<ConstantTokenElement>(
-                  elt_group->elts().at(0)->to_form(env).as_symbol()->name);
+                  elt_group->elts().at(0)->to_form(env).as_symbol().name_ptr);
             }
             auto so_positional_f = arg_forms.at(6);
             if (so_positional_f->to_form(env).is_symbol("#t")) {
@@ -3753,8 +4217,12 @@ void FunctionCallElement::update_from_stack(const Env& env,
         if (got_stack_new) {
           std::vector<Form*> stack_new_args;
           stack_new_args.push_back(pool.form<ConstantTokenElement>("'stack"));
-          stack_new_args.push_back(pool.form<ConstantTokenElement>(
-              fmt::format("'{}", type_source_form->to_string(env))));
+          if (type_source_form->to_string(env) == "array") {
+            stack_new_args.push_back(pool.form<ConstantTokenElement>("'boxed-array"));
+          } else {
+            stack_new_args.push_back(pool.form<ConstantTokenElement>(
+                fmt::format("'{}", type_source_form->to_string(env))));
+          }
           for (size_t i = 2; i < arg_forms.size(); i++) {
             stack_new_args.push_back(arg_forms.at(i));
           }
@@ -3771,6 +4239,85 @@ void FunctionCallElement::update_from_stack(const Env& env,
       result->push_back(pool.alloc_element<GenericElement>(gop, arg_forms));
 
       return;
+    }
+  }
+
+  // detect launch-particles macro
+  {
+    if (unstacked.at(0)->to_form(env).is_symbol("sp-launch-particles-var")) {
+      auto system = arg_forms.at(0);
+      auto part = arg_forms.at(1);
+      auto origin = arg_forms.at(2);
+      auto launch_state = arg_forms.at(3);
+      auto launch_control = arg_forms.at(4);
+      auto rate = arg_forms.at(5);
+      std::vector<Form*> macro;
+
+      if (system->to_string(env) != "*sp-particle-system-2d*") {
+        macro.push_back(pool.form<ConstantTokenElement>(":system"));
+        macro.push_back(system);
+      }
+      macro.push_back(part);
+      macro.push_back(origin);
+
+      auto mr_launch_state =
+          match(Matcher::cast("sparticle-launch-state", Matcher::symbol("#f")), launch_state);
+      auto mr_launch_control =
+          match(Matcher::cast("sparticle-launch-control", Matcher::symbol("#f")), launch_control);
+      if (!mr_launch_state.matched) {
+        macro.push_back(pool.form<ConstantTokenElement>(":launch-state"));
+        macro.push_back(launch_state);
+      }
+      if (!mr_launch_control.matched) {
+        macro.push_back(pool.form<ConstantTokenElement>(":launch-control"));
+        macro.push_back(launch_control);
+      }
+      if (rate->to_string(env) != "1.0") {
+        macro.push_back(pool.form<ConstantTokenElement>(":rate"));
+        macro.push_back(rate);
+      }
+
+      if (env.version != GameVersion::Jak1) {
+        macro.push_back(pool.form<ConstantTokenElement>(":origin-is-matrix"));
+        macro.push_back(pool.form<ConstantTokenElement>("#t"));
+      }
+
+      new_form = pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("launch-particles")),
+          macro);
+    }
+  }
+
+  // detect call-parent-method
+  {
+    const auto& guessed_name = env.func->guessed_name;
+    if (guessed_name.kind == FunctionName::FunctionKind::METHOD) {
+      // detect stuff like: ((find-parent-method...) arg...)
+      auto mr_find_parent =
+          match(Matcher::func(Matcher::symbol("find-parent-method"),
+                              {Matcher::symbol(env.func->method_of_type),
+                               Matcher::integer(env.func->guessed_name.method_id)}),
+                unstacked.at(0)
+
+          );
+      if (mr_find_parent.matched) {
+        new_form = pool.alloc_element<GenericElement>(
+            GenericOperator::make_function(pool.form<ConstantTokenElement>("call-parent-method")),
+            arg_forms);
+      }
+    } else if (guessed_name.kind == FunctionName::FunctionKind::V_STATE && arg_forms.size() == 2) {
+      // here, simply detect (find-parent-method...)
+      //
+      auto mr_find_parent = match(Matcher::symbol("find-parent-method"), unstacked.at(0));
+      if (mr_find_parent.matched) {
+        auto state_info =
+            env.dts->ts.lookup_method(guessed_name.type_name, guessed_name.state_name);
+        if (arg_forms.at(0)->to_string(env) == guessed_name.type_name &&
+            arg_forms.at(1)->to_string(env) == std::to_string(state_info.id)) {
+          new_form = pool.alloc_element<GenericElement>(
+              GenericOperator::make_function(pool.form<ConstantTokenElement>("find-parent-state")));
+        }
+      }
     }
   }
 
@@ -3800,13 +4347,82 @@ ConstantTokenElement* DerefElement::try_as_art_const(const Env& env, FormPool& p
     if (elt_name) {
       return pool.alloc_element<ConstantTokenElement>(*elt_name);
     } else {
-      if (env.version != GameVersion::Jak2) {
-        lg::error("function {}: did not find art element {} in {}", env.func->name(),
-                  mr.maps.ints.at(0), env.art_group());
-      }
+      lg::error("function `{}`: did not find art element {} in {}", env.func->name(),
+                mr.maps.ints.at(0), env.art_group());
     }
   }
 
+  return nullptr;
+}
+
+GenericElement* DerefElement::try_as_joint_node_index(const Env& env, FormPool& pool) {
+  auto mr =
+      match(Matcher::deref(Matcher::s6(), false,
+                           {DerefTokenMatcher::string("node-list"),
+                            DerefTokenMatcher::string("data"), DerefTokenMatcher::any_integer(0)}),
+            this);
+
+  if (mr.matched) {
+    // lg::print("func {} joint-geo: {}\n", env.func->name(), env.joint_geo());
+    auto info = env.dts->jg_info;
+    std::vector<Form*> args;
+    auto joint_name = env.get_joint_node_name(mr.maps.ints.at(0));
+    args.push_back(pool.form<ConstantTokenElement>(env.joint_geo()));
+    if (joint_name) {
+      args.push_back(pool.form<ConstantTokenElement>(joint_name.value()));
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("joint-node")), args);
+    } else {
+      lg::error("function `{}`: did not find joint node {} in {}", env.func->name(),
+                mr.maps.ints.at(0), env.joint_geo());
+    }
+  }
+
+  return nullptr;
+}
+
+GenericElement* DerefElement::try_as_curtime(const Env& env, FormPool& pool) {
+  if (env.version == GameVersion::Jak1) {
+    auto mr = match(Matcher::deref(Matcher::symbol("*display*"), false,
+                                   {DerefTokenMatcher::string("base-frame-counter")}),
+                    this);
+    if (mr.matched) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("current-time")));
+    }
+  } else {
+    auto mr = match(Matcher::deref(Matcher::s6(), false,
+                                   {DerefTokenMatcher::string("clock"),
+                                    DerefTokenMatcher::string("frame-counter")}),
+                    this);
+    if (mr.matched) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("current-time")));
+    }
+  }
+
+  return nullptr;
+}
+
+GenericElement* DerefElement::try_as_seconds_per_frame(const Env& env, FormPool& pool) {
+  if (env.version == GameVersion::Jak1) {
+    auto mr = match(Matcher::deref(Matcher::symbol("*display*"), false,
+                                   {DerefTokenMatcher::string("seconds-per-frame")}),
+                    this);
+    if (mr.matched) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("seconds-per-frame")));
+    }
+  } else {
+    auto mr = match(Matcher::deref(Matcher::s6(), false,
+                                   {DerefTokenMatcher::string("clock"),
+                                    DerefTokenMatcher::string("seconds-per-frame")}),
+                    this);
+    if (mr.matched) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("seconds-per-frame")));
+    }
+  }
   return nullptr;
 }
 
@@ -3836,15 +4452,44 @@ void DerefElement::update_from_stack(const Env& env,
     return;
   }
 
+  auto as_jnode = try_as_joint_node_index(env, pool);
+  if (as_jnode) {
+    result->push_back(as_jnode);
+    return;
+  }
+
+  auto as_simple_expr = m_base->try_as_element<SimpleExpressionElement>();
+  if (env.version >= GameVersion::Jak2 && as_simple_expr && as_simple_expr->expr().is_identity() &&
+      as_simple_expr->expr().get_arg(0).is_sym_val() &&
+      as_simple_expr->expr().get_arg(0).get_str() == "*game-info*" && m_tokens.size() >= 2 &&
+      m_tokens.at(0).is_field_name("sub-task-list") && m_tokens.at(1).is_int()) {
+    m_tokens.at(1) = DerefToken::make_int_expr(cast_to_int_enum(
+        env.dts->ts.try_enum_lookup("game-task-node"), pool, env, m_tokens.at(1).int_constant()));
+  }
+
+  // current-time macro
+  auto as_curtime = try_as_curtime(env, pool);
+  if (as_curtime) {
+    result->push_back(as_curtime);
+    return;
+  }
+
+  // seconds-per-frame macro
+  auto as_seconds_per_frame = try_as_seconds_per_frame(env, pool);
+  if (as_seconds_per_frame) {
+    result->push_back(as_seconds_per_frame);
+    return;
+  }
+
   result->push_back(this);
 }
 
 void DerefElement::inline_nested() {
-  auto as_deref = dynamic_cast<DerefElement*>(m_base->try_as_single_element());
-  if (as_deref) {
-    if (!m_is_addr_of && !as_deref->is_addr_of()) {
-      m_tokens.insert(m_tokens.begin(), as_deref->tokens().begin(), as_deref->tokens().end());
-      m_base = as_deref->m_base;
+  auto inner = dynamic_cast<DerefElement*>(m_base->try_as_single_element());
+  if (inner) {
+    if (!inner->is_addr_of()) {
+      m_tokens.insert(m_tokens.begin(), inner->tokens().begin(), inner->tokens().end());
+      m_base = inner->m_base;
     }
   }
 }
@@ -3991,6 +4636,67 @@ Form* try_rewrite_as_process_to_ppointer(CondNoElseElement* value,
 
   return pool.form<GenericElement>(
       GenericOperator::make_fixed(FixedOperatorKind::PROCESS_TO_PPOINTER), repopped);
+}
+
+/*!
+ * (if (type? foo bar)
+ *     foo
+ *     )
+ */
+Form* try_rewrite_as_as_type(CondNoElseElement* value,
+                             FormStack& stack,
+                             FormPool& pool,
+                             const Env& env,
+                             const TypeSpec& resulting_type) {
+  if (value->entries.size() != 1) {
+    return nullptr;
+  }
+
+  auto condition = value->entries.at(0).condition;
+  auto body = value->entries[0].body;
+
+  auto condition_matcher = Matcher::op(
+      GenericOpMatcher::condition(IR2_Condition::Kind::TRUTHY),
+      {Matcher::func(Matcher::symbol("type?"), {Matcher::any_reg(0), Matcher::any_symbol(1)})});
+
+  auto condition_mr = match(condition_matcher, condition);
+  if (!condition_mr.matched) {
+    return nullptr;
+  }
+
+  auto body_matcher = Matcher::any_reg(0);
+  auto body_mr = match(body_matcher, body);
+  if (!body_mr.matched) {
+    body_mr = match(Matcher::cast_to_any(1, body_matcher), body);
+    if (!body_mr.matched) {
+      return nullptr;
+    }
+  }
+  auto body_var = body_mr.maps.regs.at(0).value();
+  auto condition_var = condition_mr.maps.regs.at(0).value();
+  auto* menv = const_cast<Env*>(&env);
+  menv->disable_use(body_var);
+  auto repopped = stack.pop_reg(condition_var, {}, env, true);
+  if (!repopped) {
+    repopped = var_to_form(condition_var, pool);
+  }
+  auto new_type = condition_mr.maps.strings.at(1);
+
+  auto result = pool.form<GenericElement>(
+      GenericOperator::make_function(pool.form<ConstantTokenElement>("as-type")),
+      std::vector<Form*>{repopped, pool.form<ConstantTokenElement>(new_type)});
+
+  // silly cast situation:
+  // sometimes there is something dumb like (the specific (as-type foo general))
+  // we have to make sure that we keep the leading cast.
+  // HACK: inserting casts more aggressively in Jak 2 because I am too lazy to fix up all the
+  // slightly wrong casts that matter now.
+  if (resulting_type != TypeSpec(new_type) &&
+      (env.version == GameVersion::Jak2 || env.dts->ts.tc(TypeSpec(new_type), resulting_type))) {
+    return pool.form<CastElement>(resulting_type, result);
+  } else {
+    return result;
+  }
 }
 
 // (if x (-> x 0 self)) -> (ppointer->process x)
@@ -4165,11 +4871,18 @@ void CondNoElseElement::push_to_stack(const Env& env, FormPool& pool, FormStack&
           stack.push_value_to_reg(write_as_value, as_ja_group, true,
                                   env.get_variable_type(final_destination, false));
         } else {
-          //        lg::print("func {} final destination {} type {}\n", env.func->name(),
-          //                   final_destination.to_string(env),
-          //                   env.get_variable_type(final_destination, false).print());
-          stack.push_value_to_reg(write_as_value, pool.alloc_single_form(nullptr, this), true,
-                                  env.get_variable_type(final_destination, false));
+          auto as_as_type = try_rewrite_as_as_type(this, stack, pool, env,
+                                                   env.get_variable_type(final_destination, true));
+          if (as_as_type) {
+            stack.push_value_to_reg(write_as_value, as_as_type, true,
+                                    env.get_variable_type(final_destination, false));
+          } else {
+            //        lg::print("func {} final destination {} type {}\n", env.func->name(),
+            //                   final_destination.to_string(env),
+            //                   env.get_variable_type(final_destination, false).print());
+            stack.push_value_to_reg(write_as_value, pool.alloc_single_form(nullptr, this), true,
+                                    env.get_variable_type(final_destination, false));
+          }
         }
       }
     }
@@ -4563,8 +5276,8 @@ FormElement* try_make_nonzero_logtest(Form* in, FormPool& pool) {
    `(nonzero? (logand ,a ,b))
    )
  */
-  auto logand_matcher = Matcher::op(GenericOpMatcher::fixed(FixedOperatorKind::LOGAND),
-                                    {Matcher::any(0), Matcher::any(1)});
+  auto static const logand_matcher = Matcher::op(GenericOpMatcher::fixed(FixedOperatorKind::LOGAND),
+                                                 {Matcher::any(0), Matcher::any(1)});
   auto mr_logand = match(logand_matcher, in);
   if (mr_logand.matched) {
     return pool.alloc_element<GenericElement>(
@@ -4631,6 +5344,71 @@ enum first:
   return nullptr;
 }
 
+FormElement* try_make_logtest_mouse_macro(Form* in, FormPool& pool) {
+  /*
+(defmacro mouse-pressed ()
+  `(-> *mouse* button0-rel 0)
+  )
+
+(defmacro mouse-hold ()
+  `(-> *mouse* button0-abs 0)
+  )
+
+(defmacro mouse-pressed? (&rest buttons)
+  `(logtest? (mouse-pressed) (mouse-buttons ,@buttons))
+  )
+
+(defmacro mouse-hold? (&rest buttons)
+  `(logtest? (mouse-hold) (mouse-buttons ,@buttons))
+  )
+ */
+  auto static const mouse_matcher = Matcher::op(
+      GenericOpMatcher::fixed(FixedOperatorKind::LOGTEST),
+      {Matcher::deref(Matcher::symbol("*mouse*"), false,
+                      {DerefTokenMatcher::any_string(2), DerefTokenMatcher::integer(0)}),
+       Matcher::op_with_rest(GenericOpMatcher::func(Matcher::constant_token("mouse-buttons")),
+                             {})});
+  auto static const mouse_matcher_inv = Matcher::op(
+      GenericOpMatcher::fixed(FixedOperatorKind::LOGTEST),
+      {Matcher::op_with_rest(GenericOpMatcher::func(Matcher::constant_token("mouse-buttons")), {}),
+       Matcher::deref(Matcher::symbol("*mouse*"), false,
+                      {DerefTokenMatcher::any_string(2), DerefTokenMatcher::integer(0)})});
+
+  bool inv_match = false;
+  auto mr = match(mouse_matcher, in);
+  if (!mr.matched) {
+    mr = match(mouse_matcher_inv, in);
+    inv_match = true;
+  }
+  if (mr.matched) {
+    enum { ABS, REL, NIL } t = NIL;
+    if (mr.maps.strings.at(2) == "button0-abs") {
+      t = ABS;
+    } else if (mr.maps.strings.at(2) == "button0-rel") {
+      t = REL;
+    }
+
+    if (t != NIL) {
+      auto logtest_elt = dynamic_cast<GenericElement*>(in->at(0));
+      if (logtest_elt) {
+        auto buttons_form = logtest_elt->elts().at(inv_match ? 0 : 1);
+        std::vector<Form*> v;
+        GenericElement* butts =
+            dynamic_cast<GenericElement*>(buttons_form->at(0));  // the form with the buttons itself
+        if (butts) {
+          v = butts->elts();
+        }
+
+        return pool.alloc_element<GenericElement>(
+            GenericOperator::make_fixed(t == ABS ? FixedOperatorKind::MOUSE_HOLD_P
+                                                 : FixedOperatorKind::MOUSE_PRESSED_P),
+            v);
+      }
+    }
+  }
+  return nullptr;
+}
+
 FormElement* try_make_logtest_cpad_macro(Form* in, FormPool& pool) {
   /*
 (defmacro cpad-pressed (pad-idx)
@@ -4649,13 +5427,25 @@ FormElement* try_make_logtest_cpad_macro(Form* in, FormPool& pool) {
   `(logtest? (cpad-hold ,pad-idx) (pad-buttons ,@buttons))
   )
  */
-  auto cpad_matcher = Matcher::op(
+  auto static const cpad_matcher = Matcher::op(
       GenericOpMatcher::fixed(FixedOperatorKind::LOGTEST),
       {Matcher::deref(Matcher::symbol("*cpad-list*"), false,
                       {DerefTokenMatcher::string("cpads"), DerefTokenMatcher::any_expr_or_int(0),
                        DerefTokenMatcher::any_string(2), DerefTokenMatcher::integer(0)}),
        Matcher::op_with_rest(GenericOpMatcher::func(Matcher::constant_token("pad-buttons")), {})});
+  auto static const cpad_matcher_inv = Matcher::op(
+      GenericOpMatcher::fixed(FixedOperatorKind::LOGTEST),
+      {Matcher::op_with_rest(GenericOpMatcher::func(Matcher::constant_token("pad-buttons")), {}),
+       Matcher::deref(Matcher::symbol("*cpad-list*"), false,
+                      {DerefTokenMatcher::string("cpads"), DerefTokenMatcher::any_expr_or_int(0),
+                       DerefTokenMatcher::any_string(2), DerefTokenMatcher::integer(0)})});
+
+  bool inv_match = false;
   auto mr = match(cpad_matcher, in);
+  if (!mr.matched) {
+    mr = match(cpad_matcher_inv, in);
+    inv_match = true;
+  }
   if (mr.matched) {
     enum { ABS, REL, NIL } t = NIL;
     if (mr.maps.strings.at(2) == "button0-abs") {
@@ -4666,8 +5456,8 @@ FormElement* try_make_logtest_cpad_macro(Form* in, FormPool& pool) {
 
     if (t != NIL) {
       auto logtest_elt = dynamic_cast<GenericElement*>(in->at(0));
-      if (logtest_elt != nullptr) {
-        auto buttons_form = logtest_elt->elts().at(1);
+      if (logtest_elt) {
+        auto buttons_form = logtest_elt->elts().at(inv_match ? 0 : 1);
         std::vector<Form*> v;
         v.push_back(mr.int_or_form_to_form(pool, 0));
         GenericElement* butts =
@@ -4682,6 +5472,22 @@ FormElement* try_make_logtest_cpad_macro(Form* in, FormPool& pool) {
             v);
       }
     }
+  }
+  return nullptr;
+}
+
+FormElement* convert_logtest_to_fancy_macro(FormPool& pool, Form* logtest_form) {
+  auto as_cpad_macro = try_make_logtest_cpad_macro(logtest_form, pool);
+  if (as_cpad_macro) {
+    return as_cpad_macro;
+  }
+  auto as_mouse_macro = try_make_logtest_mouse_macro(logtest_form, pool);
+  if (as_mouse_macro) {
+    return as_mouse_macro;
+  }
+  auto focus_test_macro = try_make_focus_test_macro(logtest_form, pool);
+  if (focus_test_macro) {
+    return focus_test_macro;
   }
   return nullptr;
 }
@@ -4736,17 +5542,11 @@ FormElement* ConditionElement::make_zero_check_generic(const Env& env,
   auto as_logtest = try_make_nonzero_logtest(source_forms.at(0), pool);
   if (as_logtest) {
     auto logtest_form = pool.alloc_single_form(nullptr, as_logtest);
-    auto as_cpad_macro = try_make_logtest_cpad_macro(logtest_form, pool);
-    if (as_cpad_macro) {
-      logtest_form = pool.alloc_single_form(nullptr, as_cpad_macro);
+    auto fancy_form = convert_logtest_to_fancy_macro(pool, logtest_form);
+    if (fancy_form) {
       return pool.alloc_element<GenericElement>(
-          GenericOperator::make_compare(IR2_Condition::Kind::FALSE), logtest_form);
-    }
-    auto focus_test_macro = try_make_focus_test_macro(logtest_form, pool);
-    if (focus_test_macro) {
-      logtest_form = pool.alloc_single_form(nullptr, focus_test_macro);
-      return pool.alloc_element<GenericElement>(
-          GenericOperator::make_compare(IR2_Condition::Kind::FALSE), logtest_form);
+          GenericOperator::make_compare(IR2_Condition::Kind::FALSE),
+          pool.alloc_single_form(nullptr, fancy_form));
     }
     return pool.alloc_element<GenericElement>(
         GenericOperator::make_compare(IR2_Condition::Kind::FALSE), logtest_form);
@@ -4786,15 +5586,12 @@ FormElement* ConditionElement::make_nonzero_check_generic(const Env& env,
   auto as_logtest = try_make_nonzero_logtest(source_forms.at(0), pool);
   if (as_logtest) {
     auto logtest_form = pool.alloc_single_form(nullptr, as_logtest);
-    auto as_cpad_macro = try_make_logtest_cpad_macro(logtest_form, pool);
-    if (as_cpad_macro) {
-      return as_cpad_macro;
+    auto fancy_form = convert_logtest_to_fancy_macro(pool, logtest_form);
+    if (fancy_form) {
+      return fancy_form;
+    } else {
+      return as_logtest;
     }
-    auto focus_test_macro = try_make_focus_test_macro(logtest_form, pool);
-    if (focus_test_macro) {
-      return focus_test_macro;
-    }
-    return as_logtest;
   }
 
   return pool.alloc_element<GenericElement>(GenericOperator::make_compare(m_kind), source_forms);
@@ -4821,7 +5618,14 @@ FormElement* ConditionElement::make_equal_check_generic(const Env& env,
       return pool.alloc_element<GenericElement>(GenericOperator::make_fixed(FixedOperatorKind::EQ),
                                                 forms_with_cast);
     } else {
-      {
+      nice_constant =
+          try_make_constant_for_compare(source_forms.at(0), source_types.at(1), pool, env);
+      if (nice_constant) {
+        auto forms_with_cast = source_forms;
+        forms_with_cast.at(0) = nice_constant;
+        return pool.alloc_element<GenericElement>(
+            GenericOperator::make_fixed(FixedOperatorKind::EQ), forms_with_cast);
+      } else {
         // (= (ja-group)
         //    (-> self draw art-group data 7)
         //    )
@@ -4968,6 +5772,48 @@ FormElement* ConditionElement::make_geq_zero_unsigned_check_generic(
   return pool.alloc_element<GenericElement>(GenericOperator::make_fixed(FixedOperatorKind::GEQ),
                                             casted);
 }
+
+FormElement* ConditionElement::make_time_elapsed(const Env& env,
+                                                 FormPool& pool,
+                                                 const std::vector<Form*>& source_forms,
+                                                 const std::vector<TypeSpec>& types) {
+  // geq case:
+  // (>= (- (current-time) (-> self state-time)) (seconds 5))
+  // to
+  // (time-elapsed? (-> self state-time) (seconds 5))
+
+  // lt case:
+  // (< (- (current-time) (-> self state-time)) (seconds 5))
+  // to
+  // (not (time-elapsed? (-> self state-time) (seconds 5)))
+  auto matcher = match(
+      Matcher::op(GenericOpMatcher::fixed(FixedOperatorKind::SUBTRACTION),
+                  {Matcher::op(GenericOpMatcher::func(Matcher::constant_token("current-time")), {}),
+                   Matcher::any(0)}),
+      source_forms.at(0));
+  if (matcher.matched) {
+    auto time_elapsed = matcher.maps.forms.at(0);
+    auto time = source_forms.at(1);
+    std::vector<Form*> args;
+    args.push_back(time_elapsed);
+    args.push_back(time);
+    // TODO - how to handle unsigned case?
+    if (m_kind == IR2_Condition::Kind::LESS_THAN_SIGNED) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_compare(IR2_Condition::Kind::FALSE),
+          pool.form<GenericElement>(
+              GenericOperator::make_function(pool.form<ConstantTokenElement>("time-elapsed?")),
+              make_casts_if_needed(args, types, TypeSpec("time-frame"), pool, env)));
+    } else if (m_kind == IR2_Condition::Kind::GEQ_SIGNED) {
+      return pool.alloc_element<GenericElement>(
+          GenericOperator::make_function(pool.form<ConstantTokenElement>("time-elapsed?")),
+          make_casts_if_needed(args, types, TypeSpec("time-frame"), pool, env));
+    }
+  }
+
+  return nullptr;
+}
+
 FormElement* ConditionElement::make_generic(const Env& env,
                                             FormPool& pool,
                                             const std::vector<Form*>& source_forms,
@@ -4993,23 +5839,43 @@ FormElement* ConditionElement::make_generic(const Env& env,
     case IR2_Condition::Kind::NOT_EQUAL:
       return make_not_equal_check_generic(env, pool, source_forms, types);
 
-    case IR2_Condition::Kind::LESS_THAN_SIGNED:
+    case IR2_Condition::Kind::LESS_THAN_SIGNED: {
+      auto time_elapsed = make_time_elapsed(env, pool, source_forms, types);
+      if (time_elapsed) {
+        return time_elapsed;
+      }
       return pool.alloc_element<GenericElement>(
           GenericOperator::make_fixed(FixedOperatorKind::LT),
           make_casts_if_needed(source_forms, types, TypeSpec("int"), pool, env));
-    case IR2_Condition::Kind::LESS_THAN_UNSIGNED:
+    }
+    case IR2_Condition::Kind::LESS_THAN_UNSIGNED: {
+      auto time_elapsed = make_time_elapsed(env, pool, source_forms, types);
+      if (time_elapsed) {
+        return time_elapsed;
+      }
       return pool.alloc_element<GenericElement>(
           GenericOperator::make_fixed(FixedOperatorKind::LT),
           make_casts_if_needed(source_forms, types, TypeSpec("uint"), pool, env));
+    }
 
-    case IR2_Condition::Kind::GEQ_SIGNED:
+    case IR2_Condition::Kind::GEQ_SIGNED: {
+      auto time_elapsed = make_time_elapsed(env, pool, source_forms, types);
+      if (time_elapsed) {
+        return time_elapsed;
+      }
       return pool.alloc_element<GenericElement>(
           GenericOperator::make_fixed(FixedOperatorKind::GEQ),
           make_casts_if_needed(source_forms, types, TypeSpec("int"), pool, env));
-    case IR2_Condition::Kind::GEQ_UNSIGNED:
+    }
+    case IR2_Condition::Kind::GEQ_UNSIGNED: {
+      auto time_elapsed = make_time_elapsed(env, pool, source_forms, types);
+      if (time_elapsed) {
+        return time_elapsed;
+      }
       return pool.alloc_element<GenericElement>(
           GenericOperator::make_fixed(FixedOperatorKind::GEQ),
           make_casts_if_needed(source_forms, types, TypeSpec("uint"), pool, env));
+    }
 
     case IR2_Condition::Kind::LESS_THAN_ZERO_SIGNED: {
       return make_less_than_zero_signed_check_generic(env, pool, source_forms, types);
@@ -5025,6 +5891,14 @@ FormElement* ConditionElement::make_generic(const Env& env,
 
     case IR2_Condition::Kind::LEQ_ZERO_SIGNED: {
       auto casted = make_casts_if_needed(source_forms, types, TypeSpec("int"), pool, env);
+      auto zero = pool.form<SimpleAtomElement>(SimpleAtom::make_int_constant(0));
+      casted.push_back(zero);
+      return pool.alloc_element<GenericElement>(GenericOperator::make_fixed(FixedOperatorKind::LEQ),
+                                                casted);
+    }
+
+    case IR2_Condition::Kind::LEQ_ZERO_UNSIGNED: {
+      auto casted = make_casts_if_needed(source_forms, types, TypeSpec("uint"), pool, env);
       auto zero = pool.form<SimpleAtomElement>(SimpleAtom::make_int_constant(0));
       casted.push_back(zero);
       return pool.alloc_element<GenericElement>(GenericOperator::make_fixed(FixedOperatorKind::LEQ),
@@ -5231,7 +6105,7 @@ void ReturnElement::push_to_stack(const Env& env, FormPool& pool, FormStack& sta
         as_cast->set_type(func_type);
         return_code->push_back(as_cast);
       } else {
-        return_code = cast_form(return_code, func_type, pool, env);
+        return_code = cast_form_from(return_code, *return_type, func_type, pool, env);
         return_code->parent_element = this;
       }
     }
@@ -5960,17 +6834,11 @@ void ConditionalMoveFalseElement::push_to_stack(const Env& env, FormPool& pool, 
     auto as_logtest = try_make_nonzero_logtest(popped.at(1), pool);
     if (as_logtest) {
       auto logtest_form = pool.alloc_single_form(nullptr, as_logtest);
-      auto as_cpad_macro = try_make_logtest_cpad_macro(logtest_form, pool);
-      if (as_cpad_macro) {
-        val = pool.alloc_single_form(nullptr, as_cpad_macro);
-      }
-      if (!val) {
-        auto focus_test_macro = try_make_focus_test_macro(logtest_form, pool);
-        if (focus_test_macro) {
-          val = pool.alloc_single_form(nullptr, focus_test_macro);
-        } else {
-          val = pool.alloc_single_form(nullptr, as_logtest);
-        }
+      auto fancy_form = convert_logtest_to_fancy_macro(pool, logtest_form);
+      if (fancy_form) {
+        val = pool.alloc_single_form(nullptr, fancy_form);
+      } else {
+        val = logtest_form;
       }
     }
   } else {
@@ -5979,17 +6847,11 @@ void ConditionalMoveFalseElement::push_to_stack(const Env& env, FormPool& pool, 
       auto logtest_form = pool.alloc_single_form(nullptr, as_logtest);
       auto not_form = pool.form<GenericElement>(
           GenericOperator::make_compare(IR2_Condition::Kind::FALSE), logtest_form);
-      auto as_cpad_macro = try_make_logtest_cpad_macro(not_form, pool);
-      if (as_cpad_macro) {
-        val = pool.alloc_single_form(nullptr, as_cpad_macro);
-      }
-      if (!val) {
-        auto focus_test_macro = try_make_focus_test_macro(not_form, pool);
-        if (focus_test_macro) {
-          val = pool.alloc_single_form(nullptr, focus_test_macro);
-        } else {
-          val = not_form;
-        }
+      auto fancy_form = convert_logtest_to_fancy_macro(pool, not_form);
+      if (fancy_form) {
+        val = pool.alloc_single_form(nullptr, fancy_form);
+      } else {
+        val = not_form;
       }
     }
   }
@@ -6115,6 +6977,10 @@ bool try_vector_reset_inline(const Env& env,
   bool got_orig = false;
   RegisterAccess orig;
   store = repop_passthrough_arg(store, stack, env, &orig, &got_orig);
+
+  if (!store) {
+    return false;
+  }
 
   // create the actual  form
   Form* new_thing = pool.form<GenericElement>(

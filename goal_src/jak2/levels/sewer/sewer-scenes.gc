@@ -27,7 +27,7 @@
   )
 
 (defpart 1463
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -2.5))
     (:scale-x (meters 32))
@@ -63,7 +63,7 @@
   )
 
 (defpart 1465
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 120))
     (:rot-x (degrees 45))
@@ -98,7 +98,7 @@
   )
 
 (defpart 1461
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 16.0)
     (:y (meters -3.5) (meters 2))
     (:scale-x (meters 2.5))
@@ -142,7 +142,7 @@
   )
 
 (defpart 1464
-  :init-specs ((:texture (new 'static 'texture-id :index #x34 :page #xc))
+  :init-specs ((:texture (explosion-wave effects))
     (:num 5.0 5.0)
     (:y (meters -2.5))
     (:scale-x (meters 3) (meters 2))
@@ -194,7 +194,7 @@
   )
 
 (defpart 1462
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:birth-func 'birth-func-texture-group)
     (:num 16.0 10.0)
     (:y (meters -2.5))
@@ -257,7 +257,7 @@
   )
 
 (defpart 1460
-  :init-specs ((:texture (new 'static 'texture-id :index #x32 :page #xc))
+  :init-specs ((:texture (specs effects))
     (:num 6.0 8.0)
     (:x (meters 0.25))
     (:y (meters -2.5))
@@ -303,7 +303,7 @@
   )
 
 (defpart 1458
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 4.0 8.0)
     (:x (meters 0) (meters 0.6))
     (:y (meters -2.5))
@@ -355,7 +355,7 @@
   )
 
 (defpart 1459
-  :init-specs ((:texture (new 'static 'texture-id :index #x31 :page #xc))
+  :init-specs ((:texture (flamingstick effects))
     (:num 9.0)
     (:y (meters -2.5))
     (:scale-x (meters 4) (meters 8))
@@ -411,7 +411,7 @@
   )
 
 (defpart 1480
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.25 0.2)
     (:x (meters 0) (meters 16))
     (:y (meters -4))
@@ -448,7 +448,7 @@
   )
 
 (defpart 1483
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.4) (meters 0.1))
     (:rot-x (degrees 1.125))
@@ -466,7 +466,7 @@
   )
 
 (defpart 1482
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.1) (meters 0.05))
     (:rot-x (degrees 1.125))
@@ -484,7 +484,7 @@
   )
 
 (defpart 1484
-  :init-specs ((:texture (new 'static 'texture-id :index #x4c :page #xc))
+  :init-specs ((:texture (lasersmoke-00 effects))
     (:num 3.0)
     (:z (meters 8))
     (:scale-x (meters 0.025) (meters 0.005))
@@ -547,7 +547,7 @@
   )
 
 (defpart 1485
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 2.0)
     (:scale-x (meters 1) (meters 1))
     (:rot-z (degrees 0) (degrees 360))
@@ -571,7 +571,7 @@
   )
 
 (defpart 1486
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 8.0)
     (:scale-x (meters 0.5) (meters 0.25))
     (:rot-z (degrees 0) (degrees 360))
@@ -595,7 +595,7 @@
   )
 
 (defpart 1487
-  :init-specs ((:texture (new 'static 'texture-id :index #x26 :page #xc))
+  :init-specs ((:texture (middot effects))
     (:num 32.0)
     (:x (meters -0.4) (meters 0.8))
     (:y (meters -0.1) (meters 0.4))
@@ -906,7 +906,7 @@
     :end-point-obj (new 'static 'continue-point
       :name "sewesc-start"
       :level #f
-      :flags (continue-flags cf2)
+      :flags (continue-flags change-continue)
       :trans (new 'static 'vector :x 5541148.0 :y -363968.9 :z 2435194.5 :w 1.0)
       :quat (new 'static 'vector :y 0.0482 :w 0.9988)
       :camera-trans (new 'static 'vector :x 5518817.0 :y -344878.7 :z 2399633.5 :w 1.0)
@@ -940,11 +940,8 @@
   )
 
 (deftype fake-jinx-bomb-info (basic)
-  ((handle handle  :offset-assert   8)
+  ((handle  handle)
    )
-  :method-count-assert 9
-  :size-assert         #x10
-  :flag-assert         #x900000010
   )
 
 
@@ -1175,7 +1172,7 @@
     :end-point-obj (new 'static 'continue-point
       :name "sewesc-start"
       :level #f
-      :flags (continue-flags cf2)
+      :flags (continue-flags change-continue)
       :trans (new 'static 'vector :x 5608474.5 :y -363960.3 :z 1988017.4 :w 1.0)
       :quat (new 'static 'vector :y -0.6775 :w -0.7354)
       :camera-trans (new 'static 'vector :x 5562796.5 :y -344327.78 :z 1985962.4 :w 1.0)
@@ -1208,47 +1205,47 @@
     )
   )
 
-(defmethod draw hud-gunturret ((obj hud-gunturret))
+(defmethod draw ((this hud-gunturret))
   (set-hud-piece-position!
-    (the-as hud-sprite (-> obj sprites))
-    (the int (+ 457.0 (* 130.0 (-> obj offset))))
+    (the-as hud-sprite (-> this sprites))
+    (the int (+ 457.0 (* 130.0 (-> this offset))))
     205
     )
-  (format (clear (-> obj strings 0 text)) "~D" (-> obj values 0 current))
-  (set-as-offset-from! (the-as hud-sprite (-> obj strings 0 pos)) (the-as vector4w (-> obj sprites)) -20 24)
-  ((method-of-type hud draw) obj)
+  (format (clear (-> this strings 0 text)) "~D" (-> this values 0 current))
+  (set-as-offset-from! (the-as hud-sprite (-> this strings 0 pos)) (the-as vector4w (-> this sprites)) -20 24)
+  ((method-of-type hud draw) this)
   0
   (none)
   )
 
-(defmethod update-values hud-gunturret ((obj hud-gunturret))
-  (set! (-> obj values 0 target) (the int (-> *game-info* counter)))
-  ((method-of-type hud update-values) obj)
+(defmethod update-values ((this hud-gunturret))
+  (set! (-> this values 0 target) (the int (-> *game-info* counter)))
+  ((method-of-type hud update-values) this)
   0
   (none)
   )
 
-(defmethod init-callback hud-gunturret ((obj hud-gunturret))
-  (set! (-> obj level) (level-get *level* 'sewerb))
-  (set! (-> obj gui-id)
-        (add-process *gui-control* obj (gui-channel hud-middle-right) (gui-action hidden) (-> obj name) 81920.0 0)
+(defmethod init-callback ((this hud-gunturret))
+  (set! (-> this level) (level-get *level* 'sewerb))
+  (set! (-> this gui-id)
+        (add-process *gui-control* this (gui-channel hud-middle-right) (gui-action hidden) (-> this name) 81920.0 0)
         )
-  (logior! (-> obj flags) (hud-flags show))
-  (set! (-> obj sprites 0 tex) (lookup-texture-by-id (new 'static 'texture-id :page #xd37)))
-  (set! (-> obj sprites 0 flags) (the-as uint 4))
-  (set! (-> obj sprites 0 scale-x) 0.7)
-  (set! (-> obj sprites 0 scale-y) 0.7)
-  (alloc-string-if-needed obj 0)
-  (set! (-> obj strings 0 scale) 0.6)
-  (set! (-> obj strings 0 flags) (font-flags kerning middle large))
+  (logior! (-> this flags) (hud-flags show))
+  (set! (-> this sprites 0 tex) (lookup-texture-by-id (new 'static 'texture-id :page #xd37)))
+  (set! (-> this sprites 0 flags) (the-as uint 4))
+  (set! (-> this sprites 0 scale-x) 0.7)
+  (set! (-> this sprites 0 scale-y) 0.7)
+  (alloc-string-if-needed this 0)
+  (set! (-> this strings 0 scale) 0.6)
+  (set! (-> this strings 0 flags) (font-flags kerning middle large))
   0
   (none)
   )
 
 (set-subtask-hook!
   *game-info*
-  41
-  0
+  (game-task-node sewer-enemy-blow-up-turrets)
+  TASK_MANAGER_INIT_HOOK
   (lambda :behavior task-manager
     ()
     (while (!= (level-status *level* 'sewer) 'active)
@@ -1277,12 +1274,12 @@
 
 (set-subtask-hook!
   *game-info*
-  41
-  3
+  (game-task-node sewer-enemy-blow-up-turrets)
+  TASK_MANAGER_CODE_HOOK
   (lambda :behavior task-manager
     ()
     (local-vars (sv-96 int) (sv-100 float) (sv-104 vector))
-    (set! (-> self start-time) (-> self clock frame-counter))
+    (set-time! (-> self start-time))
     (set! (-> self hud-timer) (ppointer->handle (process-spawn hud-gunturret :init hud-init-by-other :to self)))
     (while (> (-> self data-int32 0) 0)
       (when (!= (level-status *level* 'sewer) 'active)
@@ -1327,10 +1324,10 @@
         (set! (-> *game-info* counter) (the float v1-51))
         )
       (when (and (= (-> self data-int32 1) sv-96)
-                 (and (< sv-100 122880.0) (>= (- (-> self clock frame-counter) (-> self beep-time)) (seconds 40)))
+                 (and (< sv-100 122880.0) (time-elapsed? (-> self beep-time) (seconds 40)))
                  )
         (talker-spawn-func (-> *talker-speech* 53) *entity-pool* (target-pos 0) (the-as region #f))
-        (set! (-> self beep-time) (-> self clock frame-counter))
+        (set-time! (-> self beep-time))
         )
       (suspend)
       )

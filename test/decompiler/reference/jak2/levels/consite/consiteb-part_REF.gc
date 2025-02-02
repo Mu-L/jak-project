@@ -4,23 +4,19 @@
 ;; definition of type consiteb-part
 (deftype consiteb-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type consiteb-part
-(defmethod inspect consiteb-part ((obj consiteb-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this consiteb-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -32,7 +28,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5112
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.25))
     (:scale-x (meters 2) (meters 0.1))
@@ -52,7 +48,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5113
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.25))
     (:scale-x (meters 4) (meters 0.1))
@@ -81,7 +77,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5114
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.25))
     (:rot-x (degrees 2.25))
@@ -109,7 +105,7 @@
 
 ;; failed to figure out what this is:
 (defpart 5115
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.25))
     (:rot-x (degrees 2.25))

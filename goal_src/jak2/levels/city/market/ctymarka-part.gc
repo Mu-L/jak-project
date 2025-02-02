@@ -9,10 +9,6 @@
 
 (deftype ctymarka-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 
@@ -26,7 +22,7 @@
   )
 
 (defpart 4390
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.05))
     (:scale-x (meters 2) (meters 0.1))
@@ -45,7 +41,7 @@
   )
 
 (defpart 4391
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.05))
     (:scale-x (meters 6) (meters 0.1))
@@ -78,7 +74,7 @@
   )
 
 (defpart 4395
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:x (meters 2))
     (:y (meters 2.7))
@@ -98,7 +94,7 @@
   )
 
 (defpart 4396
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:x (meters 2))
     (:y (meters 2.7))
@@ -118,7 +114,7 @@
   )
 
 (defpart 4392
-  :init-specs ((:texture (new 'static 'texture-id :index #x10 :page #x64f))
+  :init-specs ((:texture (tools-neon-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters 2))
     (:y (meters 2.7))
@@ -138,7 +134,7 @@
   )
 
 (defpart 4393
-  :init-specs ((:texture (new 'static 'texture-id :index #x12 :page #x64f))
+  :init-specs ((:texture (tools-neon-square ctymarka-sprite))
     (:num 1.0)
     (:x (meters 2))
     (:y (meters 2.7))
@@ -158,7 +154,7 @@
   )
 
 (defpart 4394
-  :init-specs ((:texture (new 'static 'texture-id :index #x11 :page #x64f))
+  :init-specs ((:texture (tools-neon-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters 2))
     (:y (meters 2.7))
@@ -204,7 +200,7 @@
   )
 
 (defpart 4412
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters 5))
     (:z (meters 0.1))
@@ -223,7 +219,7 @@
   )
 
 (defpart 4402
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x64f))
+  :init-specs ((:texture (fish-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters 4))
     (:y (meters 4.5))
@@ -244,7 +240,7 @@
   )
 
 (defpart 4397
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x64f))
+  :init-specs ((:texture (fish-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters 4))
     (:y (meters 4.5))
@@ -265,7 +261,7 @@
   )
 
 (defpart 4403
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x64f))
+  :init-specs ((:texture (fish-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters 2.45))
     (:y (meters 6.75))
@@ -286,7 +282,7 @@
   )
 
 (defpart 4398
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x64f))
+  :init-specs ((:texture (fish-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters 2.45))
     (:y (meters 6.75))
@@ -307,7 +303,7 @@
   )
 
 (defpart 4404
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x64f))
+  :init-specs ((:texture (fish-off ctymarka-sprite))
     (:num 1.0)
     (:y (meters 8))
     (:z (meters 0.1))
@@ -327,7 +323,7 @@
   )
 
 (defpart 4399
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x64f))
+  :init-specs ((:texture (fish-on ctymarka-sprite))
     (:num 1.0)
     (:y (meters 8))
     (:z (meters 0.1))
@@ -347,7 +343,7 @@
   )
 
 (defpart 4405
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x64f))
+  :init-specs ((:texture (fish-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters -2.45))
     (:y (meters 6.75))
@@ -368,7 +364,7 @@
   )
 
 (defpart 4400
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x64f))
+  :init-specs ((:texture (fish-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters -2.45))
     (:y (meters 6.75))
@@ -389,7 +385,7 @@
   )
 
 (defpart 4406
-  :init-specs ((:texture (new 'static 'texture-id :index #x2 :page #x64f))
+  :init-specs ((:texture (fish-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters -4))
     (:y (meters 4.5))
@@ -410,7 +406,7 @@
   )
 
 (defpart 4401
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x64f))
+  :init-specs ((:texture (fish-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters -4))
     (:y (meters 4.5))
@@ -431,7 +427,7 @@
   )
 
 (defpart 4407
-  :init-specs ((:texture (new 'static 'texture-id :index #x9 :page #x64f))
+  :init-specs ((:texture (fresh-fish-structure-top ctymarka-sprite))
     (:num 1.0)
     (:y (meters 8))
     (:z (meters 0.1))
@@ -451,7 +447,7 @@
   )
 
 (defpart 4413
-  :init-specs ((:texture (new 'static 'texture-id :index #x9b :page #xb))
+  :init-specs ((:texture (common-white common))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -471,7 +467,7 @@
   )
 
 (defpart 4408
-  :init-specs ((:texture (new 'static 'texture-id :index #xa :page #x64f))
+  :init-specs ((:texture (fresh-fish-water ctymarka-sprite))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -491,7 +487,7 @@
   )
 
 (defpart 4409
-  :init-specs ((:texture (new 'static 'texture-id :index #x5 :page #x64f))
+  :init-specs ((:texture (fresh-fish-fresh ctymarka-sprite))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -511,7 +507,7 @@
   )
 
 (defpart 4410
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x64f))
+  :init-specs ((:texture (fresh-fish-fish ctymarka-sprite))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -531,7 +527,7 @@
   )
 
 (defpart 4414
-  :init-specs ((:texture (new 'static 'texture-id :index #x9b :page #xb))
+  :init-specs ((:texture (common-white common))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -551,7 +547,7 @@
   )
 
 (defpart 4411
-  :init-specs ((:texture (new 'static 'texture-id :index #x8 :page #x64f))
+  :init-specs ((:texture (fresh-fish-on ctymarka-sprite))
     (:num 1.0)
     (:y (meters 2))
     (:z (meters 0.1))
@@ -601,7 +597,7 @@
   )
 
 (defpart 4419
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:x (meters 5.2))
     (:y (meters 1.2))
@@ -621,7 +617,7 @@
   )
 
 (defpart 4418
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:x (meters 5.2))
     (:y (meters 1.2))
@@ -641,7 +637,7 @@
   )
 
 (defpart 4415
-  :init-specs ((:texture (new 'static 'texture-id :index #xb :page #x64f))
+  :init-specs ((:texture (rugs-off ctymarka-sprite))
     (:num 1.0)
     (:x (meters 5.2))
     (:y (meters 1.2))
@@ -661,7 +657,7 @@
   )
 
 (defpart 4416
-  :init-specs ((:texture (new 'static 'texture-id :index #xd :page #x64f))
+  :init-specs ((:texture (rugs-rug ctymarka-sprite))
     (:num 1.0)
     (:x (meters 5.2))
     (:y (meters 1.2))
@@ -681,7 +677,7 @@
   )
 
 (defpart 4417
-  :init-specs ((:texture (new 'static 'texture-id :index #xc :page #x64f))
+  :init-specs ((:texture (rugs-on ctymarka-sprite))
     (:num 1.0)
     (:x (meters 5.2))
     (:y (meters 1.2))

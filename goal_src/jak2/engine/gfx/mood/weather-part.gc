@@ -83,7 +83,7 @@
 (define group-rain-screend-drop (-> *part-group-id-table* 1))
 
 (defpart 46
-  :init-specs ((:texture (new 'static 'texture-id :index #x29 :page #xc))
+  :init-specs ((:texture (starflash effects))
     (:num 0.1)
     (:x (meters -4.5) (meters 9))
     (:y (meters -3) (meters 6))
@@ -103,7 +103,7 @@
   )
 
 (defpart 43
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:scale-x (meters 1.5))
     (:scale-y :copy scale-x)
@@ -148,7 +148,7 @@
   )
 
 (defpart 45
-  :init-specs ((:texture (new 'static 'texture-id :index #x29 :page #xc))
+  :init-specs ((:texture (starflash effects))
     (:num 0.1)
     (:x (meters -4.5) (meters 9))
     (:y (meters -3) (meters 6))
@@ -168,7 +168,7 @@
   )
 
 (defpart 41
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:scale-x (meters 2.6))
     (:scale-y :copy scale-x)
@@ -220,7 +220,7 @@
   )
 
 (defpart 51
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:scale-x (meters 30) (meters 20))
     (:scale-y :copy scale-x)
@@ -249,7 +249,7 @@
   )
 
 (defpart 52
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:scale-x (meters 30) (meters 20))
     (:scale-y :copy scale-x)
@@ -270,7 +270,7 @@
   )
 
 (defpart 53
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:scale-x (meters 30) (meters 20))
     (:scale-y :copy scale-x)
@@ -291,7 +291,7 @@
   )
 
 (defpart 56
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 4.0)
     (:x (meters 10) (meters 10))
     (:y (meters 2) (meters 14))
@@ -315,7 +315,7 @@
   )
 
 (defpart 58
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 0.0)
     (:x (meters 0) (meters 20))
     (:y (meters 16))
@@ -352,28 +352,14 @@
     (set! (-> *part-id-table* 56 init-specs 1 initial-valuef) (* 4.0 f0-0))
     )
   (set! (-> *part-id-table* 56 init-specs 19 initial-valuef) (+ 32768.0 (vector-y-angle arg2)))
-  (let ((t9-2 sp-launch-particles-var)
-        (a0-3 *sp-particle-system-2d*)
-        (a1-2 (-> *part-id-table* 58))
-        (a2-2 *launch-matrix*)
-        )
-    (set! (-> a2-2 trans quad) (-> arg1 quad))
-    (t9-2 a0-3 a1-2 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-    )
-  (let ((t9-3 sp-launch-particles-var)
-        (a0-4 *sp-particle-system-2d*)
-        (a1-3 (-> *part-id-table* 56))
-        (a2-3 *launch-matrix*)
-        )
-    (set! (-> a2-3 trans quad) (-> arg1 quad))
-    (t9-3 a0-4 a1-3 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-    )
+  (launch-particles (-> *part-id-table* 58) arg1)
+  (launch-particles (-> *part-id-table* 56) arg1)
   0
   (none)
   )
 
 (defpart 60
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:birth-func 'birth-func-rain)
     (:num 1.0)
     (:x (meters -20) (meters 40))
@@ -394,7 +380,7 @@
   )
 
 (defpart 61
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:birth-func 'birth-func-rain)
     (:num 4.0)
     (:x (meters -20) (meters 40))
@@ -415,7 +401,7 @@
   )
 
 (defpart 62
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 3.0)
     (:scale-x (meters 0.08) (meters 0.03))
     (:rot-x 4)
@@ -443,7 +429,7 @@
   )
 
 (defpart 64
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:birth-func 'birth-func-omega-normal-orient)
     (:num 1.0)
     (:y (meters 0.2))
@@ -465,7 +451,7 @@
   )
 
 (defpart 65
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 2.0 4.0)
     (:scale-x (meters 2.5))
     (:rot-x 4)
@@ -489,7 +475,7 @@
   )
 
 (defpart 66
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 0.25))
     (:rot-x (degrees 0.225))
@@ -535,14 +521,14 @@
         ((< (-> gp-0 w) 0.0)
          (.lvf vf1 (&-> arg2 qx-qy-qz-sy quad))
          (.lvf vf2 (&-> gp-0 quad))
-         (.sub.vf vf1 vf0 vf2 :mask #b111)
+         (.sub.vf.xyz vf1 vf0 vf2)
          (.svf (&-> arg2 qx-qy-qz-sy quad) vf1)
          (.mov v1-6 vf1)
          )
         (else
           (.lvf vf1 (&-> arg2 qx-qy-qz-sy quad))
           (.lvf vf2 (&-> gp-0 quad))
-          (.add.vf vf1 vf0 vf2 :mask #b111)
+          (.add.vf.xyz vf1 vf0 vf2)
           (.svf (&-> arg2 qx-qy-qz-sy quad) vf1)
           (.mov v1-7 vf1)
           )
@@ -629,45 +615,17 @@
         (set! (-> *part-id-table* 62 init-specs 22 initial-valuef) (- 16384.0 (vector-x-angle (-> gp-0 vector 1))))
         (set! (-> *part-id-table* 62 init-specs 16 initial-valuef) f30-0)
         )
-      (sp-launch-particles-var
-        *sp-particle-system-2d*
-        (-> *part-id-table* 62)
-        gp-0
-        (the-as sparticle-launch-state #f)
-        (the-as sparticle-launch-control #f)
-        1.0
-        )
+      (launch-particles (-> *part-id-table* 62) gp-0 :origin-is-matrix #t)
       (case (-> arg1 datab 3)
         ((11 10)
          (sound-play "sizzle-drips")
-         (sp-launch-particles-var
-           *sp-particle-system-2d*
-           (-> *part-id-table* 66)
-           gp-0
-           (the-as sparticle-launch-state #f)
-           (the-as sparticle-launch-control #f)
-           1.0
-           )
-         (sp-launch-particles-var
-           *sp-particle-system-2d*
-           (-> *part-id-table* 65)
-           gp-0
-           (the-as sparticle-launch-state #f)
-           (the-as sparticle-launch-control #f)
-           1.0
-           )
+         (launch-particles (-> *part-id-table* 66) gp-0 :origin-is-matrix #t)
+         (launch-particles (-> *part-id-table* 65) gp-0 :origin-is-matrix #t)
          )
         (else
           (sound-play "dry-drips")
           (set! (-> *part-id-table* 64 init-specs 10 initial-valuef) (-> arg1 omega))
-          (sp-launch-particles-var
-            *sp-particle-system-3d*
-            (-> *part-id-table* 64)
-            gp-0
-            (the-as sparticle-launch-state #f)
-            (the-as sparticle-launch-control #f)
-            1.0
-            )
+          (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 64) gp-0 :origin-is-matrix #t)
           )
         )
       )
@@ -699,48 +657,30 @@
     (set! (-> v1-0 z) (-> arg2 z))
     (set! (-> v1-0 w) 1.0)
     (let ((gp-1 (vector+float*! (new 'stack-no-clear 'vector) arg1 v1-0 0.0)))
-      (let ((t9-0 matrix-local->world)
-            (a0-3 #f)
-            )
-        (let* ((s4-0 (t9-0 a0-3))
-               (f28-0 (lerp-scale 122.88 245.76 (fabs (-> s4-0 vector 2 y)) 0.0 0.7))
-               (f30-0 (lerp-scale 2048.0 245.76 (fabs (-> s4-0 vector 2 y)) 0.0 0.7))
-               )
-          (let ((f26-0 (lerp-scale 0.0 0.1 (-> s4-0 vector 2 y) 0.3 0.7))
-                (f0-11 (lerp-scale 1.0 0.1 (-> s4-0 vector 2 y) 0.3 0.7))
-                )
-            (if (< 0.0 f26-0)
-                (send-event *camera* 'part-water-drip f26-0 f0-11)
-                )
-            )
-          (set! (-> *part-id-table* 60 init-specs 5 initial-valuef) f28-0)
-          (set! (-> *part-id-table* 60 init-specs 5 random-rangef) f28-0)
-          (set! (-> *part-id-table* 61 init-specs 5 initial-valuef) f28-0)
-          (set! (-> *part-id-table* 61 init-specs 5 random-rangef) f28-0)
-          (set! (-> *part-id-table* 60 init-specs 6 initial-valuef) f30-0)
-          (set! (-> *part-id-table* 60 init-specs 6 random-rangef) f30-0)
-          (set! (-> *part-id-table* 61 init-specs 6 initial-valuef) f30-0)
-          (set! (-> *part-id-table* 61 init-specs 6 random-rangef) f30-0)
+      (let* ((s4-0 (matrix-local->world #f #f))
+             (f28-0 (lerp-scale 122.88 245.76 (fabs (-> s4-0 vector 2 y)) 0.0 0.7))
+             (f30-0 (lerp-scale 2048.0 245.76 (fabs (-> s4-0 vector 2 y)) 0.0 0.7))
+             )
+        (let ((f26-0 (lerp-scale 0.0 0.1 (-> s4-0 vector 2 y) 0.3 0.7))
+              (f0-11 (lerp-scale 1.0 0.1 (-> s4-0 vector 2 y) 0.3 0.7))
+              )
+          (if (< 0.0 f26-0)
+              (send-event *camera* 'part-water-drip f26-0 f0-11)
+              )
           )
+        (set! (-> *part-id-table* 60 init-specs 5 initial-valuef) f28-0)
+        (set! (-> *part-id-table* 60 init-specs 5 random-rangef) f28-0)
+        (set! (-> *part-id-table* 61 init-specs 5 initial-valuef) f28-0)
+        (set! (-> *part-id-table* 61 init-specs 5 random-rangef) f28-0)
+        (set! (-> *part-id-table* 60 init-specs 6 initial-valuef) f30-0)
+        (set! (-> *part-id-table* 60 init-specs 6 random-rangef) f30-0)
+        (set! (-> *part-id-table* 61 init-specs 6 initial-valuef) f30-0)
+        (set! (-> *part-id-table* 61 init-specs 6 random-rangef) f30-0)
         )
       (set! (-> *part-id-table* 60 init-specs 2 initial-valuef) arg0)
       (set! (-> *part-id-table* 61 init-specs 2 initial-valuef) (* 4.0 arg0))
-      (let ((t9-6 sp-launch-particles-var)
-            (a0-10 *sp-particle-system-2d*)
-            (a1-7 (-> *part-id-table* 60))
-            (a2-5 *launch-matrix*)
-            )
-        (set! (-> a2-5 trans quad) (-> gp-1 quad))
-        (t9-6 a0-10 a1-7 a2-5 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-7 sp-launch-particles-var)
-            (a0-11 *sp-particle-system-2d*)
-            (a1-8 (-> *part-id-table* 61))
-            (a2-6 *launch-matrix*)
-            )
-        (set! (-> a2-6 trans quad) (-> gp-1 quad))
-        (t9-7 a0-11 a1-8 a2-6 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
+      (launch-particles (-> *part-id-table* 60) gp-1)
+      (launch-particles (-> *part-id-table* 61) gp-1)
       )
     )
   0
@@ -748,7 +688,7 @@
   )
 
 (defbehavior cam-master-effect camera-master ()
-  (when (not (or (movie?) (>= (+ (-> self clock frame-counter) (seconds -10)) (-> self water-drip-time))))
+  (when (not (or (movie?) (>= (+ (current-time) (seconds -10)) (-> self water-drip-time))))
     (set! (-> *part-id-table* 46 init-specs 1 initial-valuef) (-> self water-drip-mult))
     (set! (-> *part-id-table* 45 init-specs 1 initial-valuef) (* 0.9 (-> self water-drip-mult)))
     (set! (-> *part-id-table* 43 init-specs 11 initial-valuef) (* -2.7306666 (-> self water-drip-speed)))
@@ -795,7 +735,7 @@
   )
 
 (defpart 67
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 2550))
     (:rot-x (degrees 1687.5))
@@ -814,7 +754,7 @@
   )
 
 (defpart 68
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 12000))
     (:rot-x (degrees 1687.5))
@@ -840,7 +780,7 @@
   )
 
 (defpart 69
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 1500))
     (:rot-x (degrees 1125))
@@ -859,7 +799,7 @@
   )
 
 (defpart 70
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 3000))
     (:rot-x (degrees 1125))
@@ -885,7 +825,7 @@
   )
 
 (defpart 71
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 6000))
     (:rot-x (degrees 2992.5))

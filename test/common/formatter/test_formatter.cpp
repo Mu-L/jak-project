@@ -26,7 +26,8 @@ EXPECTED OUTPUT
 
 #include "gtest/gtest.h"
 
-#include "third-party/fmt/core.h"
+#include "fmt/color.h"
+#include "fmt/core.h"
 
 struct TestDefinition {
   std::string name;
@@ -34,10 +35,13 @@ struct TestDefinition {
   std::string output;
 };
 
-bool run_tests(fs::path file_path) {
+std::vector<TestDefinition> get_test_definitions(const fs::path& file_path) {
+  std::vector<TestDefinition> tests;
   // Read in the file, and run the test
   const auto contents = str_util::split(file_util::read_text_file(file_path));
-  std::vector<TestDefinition> tests;
+  if (contents.empty() || (contents.size() == 1 && contents.at(0).empty())) {
+    return tests;
+  }
   TestDefinition curr_test;
   size_t i = 0;
   while (i < contents.size()) {
@@ -52,7 +56,7 @@ bool run_tests(fs::path file_path) {
     if (!curr_test.name.empty() && line.empty()) {
       i++;
       while (true) {
-        if (contents.at(i) == "---") {
+        if (str_util::trim(contents.at(i)) == "---") {
           i++;
           curr_test.input = str_util::trim(curr_test.input);
           break;
@@ -73,14 +77,52 @@ bool run_tests(fs::path file_path) {
       continue;
     }
   }
+  return tests;
+}
+
+bool has_important_tests(const fs::path& file_path) {
+  const auto& tests = get_test_definitions(file_path);
+  for (const auto& test : tests) {
+    if (str_util::starts_with(test.name, "!")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// TODO - consider adding a test that auto-formats all of goal_src (there should be no errors)
+
+bool run_tests(const fs::path& file_path, const bool only_important_tests) {
+  const auto& tests = get_test_definitions(file_path);
   // Run the tests, report successes and failures
   bool test_failed = false;
-  fmt::print("{}:\n", file_util::base_name(file_path.string()));
+  fmt::print("{}:\n", fmt::styled(file_util::base_name(file_path.string()),
+                                  fmt::emphasis::bold | fg(fmt::color::cyan)));
   for (const auto& test : tests) {
+    if (only_important_tests && !str_util::starts_with(test.name, "!")) {
+      continue;
+    }
+    if (str_util::contains(test.name, "TODO")) {
+      // ignore the output
+      fmt::print("  ⚠️ - {}\n", test.name);
+      continue;
+    }
     const auto formatted_result = formatter::format_code(test.input);
-    if (formatted_result != test.output) {
+    if (formatted_result && str_util::starts_with(test.name, "!?")) {
+      fmt::print("FORMATTED RESULT:\n\n{}\n\n", formatted_result.value());
+    }
+    if (!formatted_result) {
+      // Unable to parse, was that expected?
+      if (test.output == "__THROWS__") {
+        fmt::print("  ✅ - {}\n", test.name);
+      } else {
+        fmt::print("  ❌ - {}\n", test.name);
+        fmt::print("Unable to Format\n");
+        test_failed = true;
+      }
+    } else if (formatted_result != test.output) {
       fmt::print("  ❌ - {}\n", test.name);
-      fmt::print("{}\n", str_util::diff(test.output, formatted_result));
+      fmt::print("{}\n", str_util::diff(test.output, formatted_result.value()));
       test_failed = true;
     } else {
       fmt::print("  ✅ - {}\n", test.name);
@@ -90,14 +132,32 @@ bool run_tests(fs::path file_path) {
 }
 
 bool find_and_run_tests() {
-  // Enumerate test files
-  const auto test_files = file_util::find_files_recursively(
-      file_util::get_file_path({"test/common/formatter/corpus"}), std::regex("^.*\.test$"));
-  bool failed = false;
-  for (const auto& file : test_files) {
-    failed = run_tests(file);
+  // TODO - fails when it finds no tests
+  try {
+    // Enumerate test files
+    const auto test_files = file_util::find_files_recursively(
+        file_util::get_file_path({"test/common/formatter/corpus"}), std::regex("^.*\\.test.gc$"));
+    bool failed = false;
+    // First do a pass to see if any tests are meant to be prioritized for debugging
+    bool only_important_tests = false;
+    for (const auto& file : test_files) {
+      only_important_tests = has_important_tests(file);
+      if (only_important_tests) {
+        break;
+      }
+    }
+    for (const auto& file : test_files) {
+      // don't fail fast, but any failure means we return false
+      if (failed) {
+        run_tests(file, only_important_tests);
+      } else {
+        failed = run_tests(file, only_important_tests);
+      }
+    }
+    return !failed;
+  } catch (std::exception& e) {
+    return false;
   }
-  return !failed;
 }
 
 TEST(Formatter, FormatterTests) {

@@ -56,7 +56,7 @@
   (let ((v1-0 #f)
         (gp-0 (-> self elevator-status))
         )
-    (when (>= (- (-> self clock frame-counter) (-> self sticky-player-last-ride-time)) 0)
+    (when (>= (- (current-time) (-> self sticky-player-last-ride-time)) 0)
       (dotimes (s5-0 10)
         (let* ((f30-0 0.5)
                (v1-3 (/ (the-as int (rand-uint31-gen *random-generator*)) 256))
@@ -69,7 +69,7 @@
           )
         )
       (set! (-> self sticky-player-last-ride-time)
-            (+ (-> self clock frame-counter) (the int (* 300.0 (rand-vu-float-range 0.25 0.75))))
+            (+ (current-time) (the int (* 300.0 (rand-vu-float-range 0.25 0.75))))
             )
       (set! v1-0 #t)
       )
@@ -233,7 +233,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4794
-  :init-specs ((:texture (new 'static 'texture-id :index #x90 :page #xc))
+  :init-specs ((:texture (mech-flame effects))
     (:num 1.0)
     (:y (meters 0))
     (:scale-x (meters 2.5) (meters 0.5))
@@ -251,7 +251,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4795
-  :init-specs ((:texture (new 'static 'texture-id :index #x90 :page #xc))
+  :init-specs ((:texture (mech-flame effects))
     (:num 1.0)
     (:y (meters 0))
     (:scale-x (meters 2.5) (meters 0.5))
@@ -269,7 +269,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4796
-  :init-specs ((:texture (new 'static 'texture-id :index #x90 :page #xc))
+  :init-specs ((:texture (mech-flame effects))
     (:num 1.0)
     (:y (meters 0))
     (:scale-x (meters 2.5) (meters 0.5))
@@ -287,7 +287,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4797
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 0.2))
     (:scale-x (meters 1.5) (meters 0.1))
@@ -306,7 +306,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4798
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.0 1.0)
     (:y (meters 0) (meters 0.25))
     (:scale-x (meters 0.2) (meters 0.2))
@@ -340,7 +340,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4799
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 0.1 0.1)
     (:y (meters 0.25) (meters 0.5))
     (:scale-x (meters 0.05))
@@ -527,7 +527,7 @@
     :load-point-obj (new 'static 'continue-point
       :name "palroof-boss"
       :level #f
-      :flags (continue-flags cf3 cf17)
+      :flags (continue-flags no-auto test)
       :trans (new 'static 'vector :x 870794.06 :y 1671154.9 :z 2027482.4 :w 1.0)
       :quat (new 'static 'vector :y 0.4793 :w 0.8776)
       :camera-trans (new 'static 'vector :x 831816.06 :y 1693132.0 :z 2045632.9 :w 1.0)
@@ -568,7 +568,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4804
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 0.1))
     (:scale-y :copy scale-x)
@@ -595,29 +595,15 @@
   (let ((gp-0 (new 'stack-no-clear 'vector)))
     (sp-kill-particle arg0 arg1)
     (set-vector! gp-0 (-> arg2 vector 0 x) (-> arg2 vector 0 y) (-> arg2 vector 0 z) 1.0)
-    (let ((t9-1 sp-launch-particles-var)
-          (a0-2 *sp-particle-system-2d*)
-          (a1-1 (-> *part-id-table* 4806))
-          (a2-1 *launch-matrix*)
-          )
-      (set! (-> a2-1 trans quad) (-> gp-0 quad))
-      (t9-1 a0-2 a1-1 a2-1 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-      )
-    (let ((t9-2 sp-launch-particles-var)
-          (a0-3 *sp-particle-system-2d*)
-          (a1-2 (-> *part-id-table* 4807))
-          (a2-2 *launch-matrix*)
-          )
-      (set! (-> a2-2 trans quad) (-> gp-0 quad))
-      (t9-2 a0-3 a1-2 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-      )
+    (launch-particles (-> *part-id-table* 4806) gp-0)
+    (launch-particles (-> *part-id-table* 4807) gp-0)
     )
   (none)
   )
 
 ;; failed to figure out what this is:
 (defpart 4806
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 1) (meters 8))
     (:rot-x (degrees 11.25))
@@ -637,7 +623,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4807
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 8.0 8.0)
     (:scale-x (meters 0.5))
     (:rot-x 4)
@@ -672,7 +658,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4808
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:birth-func 'birth-func-texture-group)
     (:num 0.5 1.0)
     (:scale-x (meters 2) (meters 2))
@@ -734,7 +720,7 @@
   (let ((v1-8 #f)
         (gp-0 (-> self elevator-status))
         )
-    (when (>= (- (-> self clock frame-counter) (-> self sticky-player-last-ride-time)) 0)
+    (when (>= (- (current-time) (-> self sticky-player-last-ride-time)) 0)
       (dotimes (s5-0 10)
         (let* ((f30-0 0.5)
                (v1-11 (/ (the-as int (rand-uint31-gen *random-generator*)) 256))
@@ -747,7 +733,7 @@
           )
         )
       (set! (-> self sticky-player-last-ride-time)
-            (+ (-> self clock frame-counter) (the int (* 300.0 (rand-vu-float-range 0.25 0.75))))
+            (+ (current-time) (the int (* 300.0 (rand-vu-float-range 0.25 0.75))))
             )
       (set! v1-8 #t)
       )

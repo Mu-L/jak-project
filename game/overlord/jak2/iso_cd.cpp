@@ -77,8 +77,15 @@ LoadStackEntry* FS_OpenWad(FileRecord* fr, int offset);
 void FS_Close(LoadStackEntry* lse);
 int FS_PageBeginRead(LoadStackEntry* lse, Buffer* buffer);
 uint32_t FS_LoadSoundBank(char* name, SoundBank* buffer);
-uint32_t FS_LoadMusic(char* name, s32* buffer);
+uint32_t FS_LoadMusic(char* name, snd::BankHandle* buffer);
 u32 FS_SyncRead();
+
+struct FakeCd {
+  int offset_into_file = 0;
+  FILE* fp = nullptr;
+  void (*callback)(int) = nullptr;
+  FileRecord* last_fr = nullptr;
+} gFakeCd;
 
 void iso_cd_init_globals() {
   ReadPagesCurrentPage = nullptr;
@@ -110,18 +117,20 @@ void iso_cd_init_globals() {
   iso_cd.load_sound_bank = FS_LoadSoundBank;
   iso_cd.load_music = FS_LoadMusic;
   iso_cd.sync_read = FS_SyncRead;
+  gFakeCd.last_fr = nullptr;
+}
+
+static FILE* open_fr(FileRecord* fr, s32 thread_to_wake) {
+  const char* path = get_file_path(fr);
+  FILE* fp = file_util::open_file(path, "rb");
+  iop::iWakeupThread(thread_to_wake);
+
+  return fp;
 }
 
 ///////////////////////////
 // Sony Fake CD Functions
 ///////////////////////////
-
-struct FakeCd {
-  int offset_into_file = 0;
-  FILE* fp = nullptr;
-  void (*callback)(int) = nullptr;
-  FileRecord* last_fr = nullptr;
-} gFakeCd;
 
 auto sceCdCallback(void (*callback)(int)) {
   auto ret = gFakeCd.callback;
@@ -131,17 +140,25 @@ auto sceCdCallback(void (*callback)(int)) {
 
 int sceCdRead(int lsn, int num_sectors, void* dest, void* mode) {
   (void)mode;
-  // printf("sceCdRead %d, %d -> %p\n", lsn, num_sectors, dest);
-  ASSERT(gFakeCd.fp);
-  if (fseek(gFakeCd.fp, lsn * SECTOR_SIZE, SEEK_SET)) {
-    ASSERT_MSG(false, "Failed to fseek");
-  }
-  if (fread(dest, num_sectors * SECTOR_SIZE, 1, gFakeCd.fp) < 0) {
-    printf("dest is %p, num_sectors %d, lsn %d\n", dest, num_sectors, lsn);
-    printf("err: %s\n", strerror(errno));
-    ASSERT_MSG(false, "Failed to fread");
-  }
-  ASSERT(gFakeCd.callback);
+  auto do_read = [lsn, num_sectors, dest](s32 thid) {
+    // printf("sceCdRead %d, %d -> %p\n", lsn, num_sectors, dest);
+    ASSERT(gFakeCd.fp);
+    if (fseek(gFakeCd.fp, lsn * SECTOR_SIZE, SEEK_SET)) {
+      ASSERT_MSG(false, "Failed to fseek");
+    }
+    if (fread(dest, num_sectors * SECTOR_SIZE, 1, gFakeCd.fp) < 0) {
+      printf("dest is %p, num_sectors %d, lsn %d\n", dest, num_sectors, lsn);
+      printf("err: %s\n", strerror(errno));
+      ASSERT_MSG(false, "Failed to fread");
+    }
+    ASSERT(gFakeCd.callback);
+
+    iWakeupThread(thid);
+  };
+
+  auto future = thpool.submit(do_read, GetThreadId());
+  SleepThread();
+  future.get();
 
   return 1;
 }
@@ -594,13 +611,15 @@ int FS_PageBeginRead(LoadStackEntry* lse, Buffer* buffer) {
 
     // start a read!
     if (gFakeCd.last_fr != lse->fr) {
-      const char* path = get_file_path(lse->fr);
-      FILE* fp = file_util::open_file(path, "rb");
+      auto future = thpool.submit(open_fr, lse->fr, GetThreadId());
+      SleepThread();
+      FILE* fp = future.get();
       if (!fp) {
-        lg::error("[OVERLORD] fake iso could not open the file \"{}\"", path);
+        lg::error("[OVERLORD] fake iso could not open the file \"{}\"", get_file_path(lse->fr));
       } else {
         // printf("PAGE READING %s\n", path);
       }
+
       ASSERT(fp);
 
       if (gFakeCd.fp) {
@@ -643,7 +662,7 @@ uint32_t FS_LoadSoundBank(char* name, SoundBank* buffer) {
   FileRecord* file = nullptr;
   char namebuf[16];
   char isoname[16];
-  u32 handle;
+  snd::BankHandle handle;
 
   strncpy(namebuf, name, 12);
   namebuf[8] = 0;
@@ -662,11 +681,11 @@ uint32_t FS_LoadSoundBank(char* name, SoundBank* buffer) {
   return CMD_STATUS_DONE;
 }
 
-uint32_t FS_LoadMusic(char* name, s32* bank_handle) {
+uint32_t FS_LoadMusic(char* name, snd::BankHandle* bank_handle) {
   FileRecord* file = nullptr;
   char namebuf[16];
   char isoname[16];
-  u32 handle;
+  snd::BankHandle handle;
 
   strncpy(namebuf, name, 12);
   namebuf[8] = 0;

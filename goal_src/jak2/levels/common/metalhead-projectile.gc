@@ -8,7 +8,7 @@
 ;; DECOMP BEGINS
 
 (defpart 621
-  :init-specs ((:texture (new 'static 'texture-id :index #x80 :page #xc))
+  :init-specs ((:texture (gun-enemy-beam effects))
     (:birth-func 'birth-func-set-quat)
     (:num 1.0)
     (:scale-x (meters 0.25))
@@ -23,7 +23,7 @@
   )
 
 (defpart 622
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 3))
     (:rot-z (degrees 0) (degrees 360))
@@ -41,7 +41,7 @@
   )
 
 (defpart 623
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #xc))
+  :init-specs ((:texture (metalhead-gun-part effects))
     (:num 16.0)
     (:z (meters 0) (meters -2))
     (:scale-x (meters 0.5) (meters 0.5))
@@ -61,7 +61,7 @@
   )
 
 (defpart 624
-  :init-specs ((:texture (new 'static 'texture-id :index #x81 :page #xc))
+  :init-specs ((:texture (gun-enemy-muzzleflash effects))
     (:birth-func 'birth-func-set-quat)
     (:num 1.0)
     (:scale-x (meters 2))
@@ -77,7 +77,7 @@
   )
 
 (defpart 625
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 2))
     (:rot-x (degrees 4.5))
@@ -112,7 +112,7 @@
   )
 
 (defpart 629
-  :init-specs ((:texture (new 'static 'texture-id :index #x33 :page #xc))
+  :init-specs ((:texture (explosion-nebula effects))
     (:num 1.0)
     (:scale-x (meters 1))
     (:rot-x (degrees 1.125))
@@ -132,7 +132,7 @@
   )
 
 (defpart 630
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 8.0 8.0)
     (:scale-x (meters 1) (meters 0.5))
     (:rot-z (degrees 0) (degrees 360))
@@ -159,7 +159,7 @@
   )
 
 (defpart 631
-  :init-specs ((:texture (new 'static 'texture-id :index #x14 :page #xc))
+  :init-specs ((:texture (metalhead-gun-part effects))
     (:num 20.0 10.0)
     (:y (meters 0.25))
     (:scale-x (meters 0.075) (meters 0.05))
@@ -191,7 +191,7 @@
   )
 
 (defpart 627
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 4))
     (:rot-x (degrees 4.5))
@@ -222,7 +222,7 @@
   )
 
 (defpart 628
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 2.0)
     (:scale-x (meters 1))
     (:rot-x (degrees 4.5))
@@ -256,7 +256,7 @@
   )
 
 (defpart 626
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 1))
     (:rot-z (degrees 0) (degrees 360))
@@ -293,7 +293,7 @@
   )
 
 (defpart 636
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:scale-x (meters 2.5))
     (:rot-x (degrees 2.25))
@@ -309,20 +309,16 @@
   )
 
 (deftype metalhead-shot (projectile)
-  ((tail-pos vector :inline :offset-assert 480)
+  ((tail-pos  vector  :inline)
    )
-  :heap-base #x170
-  :method-count-assert 40
-  :size-assert         #x1f0
-  :flag-assert         #x28017001f0
   )
 
 
-(defmethod draw-laser-sight metalhead-shot ((obj metalhead-shot))
+(defmethod draw-laser-sight ((this metalhead-shot))
   "TODO - confirm If applicable, draw the laser sight particles"
-  (draw-beam (-> *part-id-table* 624) (-> obj tail-pos) (-> obj starting-dir) #f #t)
-  (let* ((a0-3 (vector-normalize-copy! (new 'stack-no-clear 'vector) (-> obj starting-dir) 2048.0))
-         (v1-2 (vector+! (new 'stack-no-clear 'vector) (-> obj tail-pos) a0-3))
+  (draw-beam (-> *part-id-table* 624) (-> this tail-pos) (-> this starting-dir) #f #t)
+  (let* ((a0-3 (vector-normalize-copy! (new 'stack-no-clear 'vector) (-> this starting-dir) 2048.0))
+         (v1-2 (vector+! (new 'stack-no-clear 'vector) (-> this tail-pos) a0-3))
          (t9-2 sp-launch-particles-var)
          (a0-4 *sp-particle-system-2d*)
          (a1-4 (-> *part-id-table* 625))
@@ -335,7 +331,7 @@
   (none)
   )
 
-(defmethod spawn-impact-particles metalhead-shot ((obj metalhead-shot))
+(defmethod spawn-impact-particles ((this metalhead-shot))
   "Spawns associated particles with the projectile if applicable"
   (rlet ((acc :class vf)
          (vf0 :class vf)
@@ -345,8 +341,8 @@
          (vf7 :class vf)
          )
     (init-vf0-vector)
-    (let* ((gp-0 (-> obj root-override trans))
-           (a1-0 (-> obj tail-pos))
+    (let* ((gp-0 (-> this root trans))
+           (a1-0 (-> this tail-pos))
            (s5-1 (vector-! (new 'stack-no-clear 'vector) gp-0 a1-0))
            (f30-0 (vector-length s5-1))
            )
@@ -360,9 +356,9 @@
             )
           (.lvf vf4 (&-> v1-4 quad))
           )
-        (.add.x.vf vf6 vf0 vf0 :mask #b1000)
-        (.mul.x.vf acc vf5 vf7 :mask #b111)
-        (.add.mul.w.vf vf6 vf4 vf0 acc :mask #b111)
+        (.add.x.vf.w vf6 vf0 vf0)
+        (.mul.x.vf.xyz acc vf5 vf7)
+        (.add.mul.w.vf.xyz vf6 vf4 vf0 acc)
         (.svf (&-> s4-0 quad) vf6)
         (let ((f28-0 (-> *part-id-table* 621 init-specs 4 initial-valuef)))
           (set! (-> *part-id-table* 621 init-specs 4 initial-valuef) (fmin f28-0 (vector-length s5-1)))
@@ -370,17 +366,10 @@
           (set! (-> *part-id-table* 621 init-specs 4 initial-valuef) f28-0)
           )
         (vector-normalize! s5-1 1.0)
-        (let ((t9-2 sp-launch-particles-var)
-              (a0-5 *sp-particle-system-2d*)
-              (a1-2 (-> *part-id-table* 622))
-              (a2-3 *launch-matrix*)
-              )
-          (set! (-> a2-3 trans quad) (-> s4-0 quad))
-          (t9-2 a0-5 a1-2 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-          )
+        (launch-particles (-> *part-id-table* 622) s4-0)
         )
       (let ((s4-1 (new 'stack-no-clear 'matrix))
-            (f26-0 (* 0.000020345053 f30-0))
+            (f26-0 (/ f30-0 (meters 12)))
             (f30-1 (-> *part-id-table* 623 init-specs 3 initial-valuef))
             (f28-1 (-> *part-id-table* 623 init-specs 5 initial-valuef))
             )
@@ -388,14 +377,7 @@
         (set! (-> s4-1 trans quad) (-> gp-0 quad))
         (set! (-> *part-id-table* 623 init-specs 3 initial-valuef) (* f26-0 f30-1))
         (set! (-> *part-id-table* 623 init-specs 5 initial-valuef) (* f26-0 f28-1))
-        (sp-launch-particles-var
-          *sp-particle-system-2d*
-          (-> *part-id-table* 623)
-          s4-1
-          (the-as sparticle-launch-state #f)
-          (the-as sparticle-launch-control #f)
-          1.0
-          )
+        (launch-particles (-> *part-id-table* 623) s4-1 :origin-is-matrix #t)
         (set! (-> *part-id-table* 623 init-specs 3 initial-valuef) f30-1)
         (set! (-> *part-id-table* 623 init-specs 5 initial-valuef) f28-1)
         )
@@ -405,10 +387,10 @@
     )
   )
 
-(defmethod spawn-shell-particles metalhead-shot ((obj metalhead-shot))
+(defmethod spawn-shell-particles ((this metalhead-shot))
   "TODO - confirm"
-  (let* ((s5-0 (-> obj root-override))
-         (v1-2 (vector-normalize! (vector-! (new 'stack-no-clear 'vector) (-> obj tail-pos) (-> s5-0 trans)) 2048.0))
+  (let* ((s5-0 (-> this root))
+         (v1-2 (vector-normalize! (vector-! (new 'stack-no-clear 'vector) (-> this tail-pos) (-> s5-0 trans)) 2048.0))
          (gp-0 (new 'stack-no-clear 'vector))
          )
     (set! (-> gp-0 quad) (-> s5-0 trans quad))
@@ -454,16 +436,16 @@
   )
 
 ;; WARN: Return type mismatch sound-id vs none.
-(defmethod play-impact-sound metalhead-shot ((obj metalhead-shot) (arg0 projectile-options))
+(defmethod play-impact-sound ((this metalhead-shot) (arg0 projectile-options))
   (with-pp
     (case arg0
       (((projectile-options lose-altitude proj-options-2))
-       (when (nonzero? (-> obj sound-id))
+       (when (nonzero? (-> this sound-id))
          (when *sound-player-enable*
            (let ((gp-0 (the-as sound-rpc-set-param (get-sound-buffer-entry))))
              (set! (-> gp-0 command) (sound-command set-param))
-             (set! (-> gp-0 id) (-> obj sound-id))
-             (let ((a1-1 (-> obj root-override trans)))
+             (set! (-> gp-0 id) (-> this sound-id))
+             (let ((a1-1 (-> this root trans)))
                (let ((s5-1 pp))
                  (when (= a1-1 #t)
                    (if (and s5-1 (type? s5-1 process-drawable) (nonzero? (-> (the-as process-drawable s5-1) root)))
@@ -487,7 +469,7 @@
 
 (defun metalhead-shot-move ((arg0 metalhead-shot))
   (projectile-move-fill-line-sphere arg0)
-  (let ((s5-0 (-> arg0 root-override)))
+  (let ((s5-0 (-> arg0 root)))
     (let ((s4-0 (new 'stack-no-clear 'vector)))
       (vector-! s4-0 (-> arg0 tail-pos) (-> s5-0 trans))
       (let ((f0-0 (vector-length s4-0)))
@@ -505,9 +487,9 @@
   (none)
   )
 
-(defmethod init-proj-collision! metalhead-shot ((obj metalhead-shot))
+(defmethod init-proj-collision! ((this metalhead-shot))
   "Init the [[projectile]]'s [[collide-shape]]"
-  (let ((s5-0 (new 'process 'collide-shape-moving obj (collide-list-enum hit-by-player))))
+  (let ((s5-0 (new 'process 'collide-shape-moving this (collide-list-enum hit-by-player))))
     (set! (-> s5-0 dynam) (copy *standard-dynamics* 'process))
     (set! (-> s5-0 reaction)
           (the-as (function control-info collide-query vector vector collide-status) cshape-reaction-just-move)
@@ -549,22 +531,22 @@
       )
     (set! (-> s5-0 max-iteration-count) (the-as uint 1))
     (set! (-> s5-0 event-self) 'touched)
-    (set! (-> obj root-override) s5-0)
+    (set! (-> this root) s5-0)
     )
-  (set! (-> obj root-override pat-ignore-mask)
+  (set! (-> this root pat-ignore-mask)
         (new 'static 'pat-surface :noentity #x1 :nojak #x1 :probe #x1 :noproj #x1 :noendlessfall #x1)
         )
   (none)
   )
 
-(defmethod init-proj-settings! metalhead-shot ((obj metalhead-shot))
+(defmethod init-proj-settings! ((this metalhead-shot))
   "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
-  (set! (-> obj tail-pos quad) (-> obj root-override trans quad))
-  (set! (-> obj attack-mode) 'metalhead-shot)
-  (set! (-> obj max-speed) 532480.0)
-  (set! (-> obj move) metalhead-shot-move)
-  (set! (-> obj timeout) (seconds 0.767))
-  (set-gravity-length (-> obj root-override dynam) 573440.0)
+  (set! (-> this tail-pos quad) (-> this root trans quad))
+  (set! (-> this attack-mode) 'metalhead-shot)
+  (set! (-> this max-speed) 532480.0)
+  (set! (-> this move) metalhead-shot-move)
+  (set! (-> this timeout) (seconds 0.767))
+  (set-gravity-length (-> this root dynam) 573440.0)
   (none)
   )
 
@@ -601,7 +583,7 @@
   )
 
 (defpart 637
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 3) (meters 1))
     (:rot-x (degrees 2.25))
@@ -621,7 +603,7 @@
   )
 
 (defpart 638
-  :init-specs ((:texture (new 'static 'texture-id :index #x1 :page #xade))
+  :init-specs ((:texture (grenadier-grenade-part dig3a-sprite))
     (:num 4.0)
     (:scale-x (meters 1) (meters 0.2))
     (:rot-z (degrees 0) (degrees 360))
@@ -646,7 +628,7 @@
   )
 
 (defpart 639
-  :init-specs ((:texture (new 'static 'texture-id :index #x1 :page #xade))
+  :init-specs ((:texture (grenadier-grenade-part dig3a-sprite))
     (:num 2.0 1.0)
     (:scale-x (meters 0.8) (meters 0.4))
     (:scale-y (meters 0.6) (meters 0.2))
@@ -675,22 +657,18 @@
   )
 
 (deftype metalhead-grenade-shot (projectile)
-  ((tumble-quat  quaternion :inline :offset-assert 480)
-   (blast-radius float              :offset-assert 496)
+  ((tumble-quat   quaternion  :inline)
+   (blast-radius  float)
    )
-  :heap-base #x180
-  :method-count-assert 40
-  :size-assert         #x1f4
-  :flag-assert         #x28018001f4
   )
 
 
-(defmethod spawn-shell-particles metalhead-grenade-shot ((obj metalhead-grenade-shot))
+(defmethod spawn-shell-particles ((this metalhead-grenade-shot))
   "TODO - confirm"
   (let ((gp-0 (get-process *default-dead-pool* part-tracker #x4000)))
     (when gp-0
       (let ((t9-1 (method-of-type part-tracker activate)))
-        (t9-1 (the-as part-tracker gp-0) obj (symbol->string (-> part-tracker symbol)) (the-as pointer #x70004000))
+        (t9-1 (the-as part-tracker gp-0) this (symbol->string (-> part-tracker symbol)) (the-as pointer #x70004000))
         )
       (let ((t9-2 run-function-in-process)
             (a0-3 gp-0)
@@ -702,7 +680,7 @@
             (t2-0 #f)
             (t3-0 *launch-matrix*)
             )
-        (set! (-> t3-0 trans quad) (-> obj root-override trans quad))
+        (set! (-> t3-0 trans quad) (-> this root trans quad))
         ((the-as (function object object object object object object object object none) t9-2)
          a0-3
          a1-2
@@ -721,13 +699,13 @@
   (none)
   )
 
-(defmethod play-impact-sound metalhead-grenade-shot ((obj metalhead-grenade-shot) (arg0 projectile-options))
+(defmethod play-impact-sound ((this metalhead-grenade-shot) (arg0 projectile-options))
   (case arg0
     (((projectile-options lose-altitude))
      (sound-play "gren-shot-hit")
      )
     (((projectile-options lose-altitude proj-options-2))
-     (sound-play "gren-missile" :id (-> obj sound-id) :position (-> obj root-override trans))
+     (sound-play "gren-missile" :id (-> this sound-id) :position (-> this root trans))
      )
     )
   0
@@ -736,8 +714,8 @@
 
 (defstate impact (metalhead-grenade-shot)
   :virtual #t
-  :event (behavior ((proc process) (arg1 int) (event-type symbol) (event event-message-block))
-    (case event-type
+  :event (behavior ((proc process) (argc int) (message symbol) (block event-message-block))
+    (case message
       (('touched)
        (let* ((s4-0 proc)
               (v1-1 (if (type? s4-0 process-drawable)
@@ -750,7 +728,7 @@
                  (a1-3 (new 'stack 'collide-query))
                  )
              0.0
-             (set! (-> a1-3 start-pos quad) (-> self root-override root-prim prim-core world-sphere quad))
+             (set! (-> a1-3 start-pos quad) (-> self root root-prim prim-core world-sphere quad))
              (vector-!
                (-> a1-3 move-dist)
                (the-as vector (-> (the-as collide-shape s4-1) root-prim prim-core))
@@ -761,22 +739,11 @@
                (set! (-> v1-6 collide-with) (collide-spec backgnd))
                (set! (-> v1-6 ignore-process0) self)
                (set! (-> v1-6 ignore-process1) (ppointer->process (-> self parent)))
-               (set! (-> v1-6 ignore-pat) (-> self root-override pat-ignore-mask))
+               (set! (-> v1-6 ignore-pat) (-> self root pat-ignore-mask))
                (set! (-> v1-6 action-mask) (collide-action solid))
                )
              (when (< (fill-and-probe-using-line-sphere *collide-cache* a1-3) 0.0)
-               (let ((a1-4 (new 'stack-no-clear 'event-message-block)))
-                 (set! (-> a1-4 from) (process->ppointer self))
-                 (set! (-> a1-4 num-params) 2)
-                 (set! (-> a1-4 message) 'attack)
-                 (set! (-> a1-4 param 0) (-> event param 0))
-                 (let ((v1-13 (new 'static 'attack-info :mask (attack-info-mask mode id))))
-                   (set! (-> v1-13 id) (-> self attack-id))
-                   (set! (-> v1-13 mode) 'explode)
-                   (set! (-> a1-4 param 1) (the-as uint v1-13))
-                   )
-                 (send-event-function proc a1-4)
-                 )
+               (send-event proc 'attack (-> block param 0) (static-attack-info ((id (-> self attack-id)) (mode 'explode))))
                (let ((v1-15 (-> self notify-handle)))
                  (if (handle->process v1-15)
                      (send-event (-> v1-15 process 0) 'notify 'attack proc)
@@ -790,7 +757,7 @@
       )
     )
   :code (behavior ()
-    (let ((v1-1 (-> self root-override root-prim)))
+    (let ((v1-1 (-> self root root-prim)))
       (set! (-> v1-1 local-sphere w) (-> self blast-radius))
       (set! (-> v1-1 prim-core world-sphere w) (-> self blast-radius))
       (set! (-> v1-1 prim-core collide-with)
@@ -798,15 +765,15 @@
             )
       (set! (-> v1-1 prim-core collide-as) (collide-spec enemy))
       )
-    (update-transforms (-> self root-override))
+    (update-transforms (-> self root))
     (let ((a1-0 (new 'stack-no-clear 'overlaps-others-params)))
       (set! (-> a1-0 options) (overlaps-others-options))
       (set! (-> a1-0 collide-with-filter) (the-as collide-spec -1))
       (set! (-> a1-0 tlist) *touching-list*)
-      (find-overlapping-shapes (-> self root-override) a1-0)
+      (find-overlapping-shapes (-> self root) a1-0)
       )
     (suspend)
-    (let ((v1-9 (-> self root-override root-prim)))
+    (let ((v1-9 (-> self root root-prim)))
       (set! (-> v1-9 prim-core collide-as) (collide-spec))
       (set! (-> v1-9 prim-core collide-with) (collide-spec))
       )
@@ -815,7 +782,6 @@
       (suspend)
       )
     (deactivate self)
-    (none)
     )
   )
 
@@ -823,27 +789,26 @@
   :virtual #t
   :enter (behavior ()
     (go-virtual impact)
-    (none)
     )
   )
 
-(defmethod spawn-impact-particles metalhead-grenade-shot ((obj metalhead-grenade-shot))
+(defmethod spawn-impact-particles ((this metalhead-grenade-shot))
   "Spawns associated particles with the projectile if applicable"
-  (spawn (-> obj part) (-> obj root-override trans))
+  (spawn (-> this part) (-> this root trans))
   0
   (none)
   )
 
 (defun gren-canister-move ((arg0 metalhead-grenade-shot))
-  (quaternion*! (-> arg0 root-override quat) (-> arg0 root-override quat) (-> arg0 tumble-quat))
+  (quaternion*! (-> arg0 root quat) (-> arg0 root quat) (-> arg0 tumble-quat))
   (projectile-move-fill-all-dirs arg0)
   (let ((s5-0 (new 'stack-no-clear 'water-info)))
-    (water-info-init! (-> arg0 root-override) s5-0 (collide-action solid semi-solid))
-    (if (and (logtest? (-> s5-0 flags) (water-flags active)) (< (-> arg0 root-override trans y) (-> s5-0 trans y)))
+    (water-info-init! (-> arg0 root) s5-0 (collide-action solid semi-solid))
+    (if (and (logtest? (-> s5-0 flags) (water-flags active)) (< (-> arg0 root trans y) (-> s5-0 trans y)))
         (go (method-of-object arg0 impact))
         )
     )
-  (if (logtest? (-> arg0 root-override status) (collide-status touch-surface))
+  (if (logtest? (-> arg0 root status) (collide-status touch-surface))
       (go (method-of-object arg0 impact))
       )
   0
@@ -870,9 +835,9 @@
   (none)
   )
 
-(defmethod init-proj-collision! metalhead-grenade-shot ((obj metalhead-grenade-shot))
+(defmethod init-proj-collision! ((this metalhead-grenade-shot))
   "Init the [[projectile]]'s [[collide-shape]]"
-  (let ((s5-0 (new 'process 'collide-shape-moving obj (collide-list-enum hit-by-player))))
+  (let ((s5-0 (new 'process 'collide-shape-moving this (collide-list-enum hit-by-player))))
     (set! (-> s5-0 dynam) (copy *standard-dynamics* 'process))
     (set! (-> s5-0 reaction)
           (the-as (function control-info collide-query vector vector collide-status) gren-cshape-reaction-canister)
@@ -898,31 +863,31 @@
       )
     (set! (-> s5-0 max-iteration-count) (the-as uint 2))
     (set! (-> s5-0 event-self) 'touched)
-    (set! (-> obj root-override) s5-0)
+    (set! (-> this root) s5-0)
     )
-  (set! (-> obj root-override pat-ignore-mask)
+  (set! (-> this root pat-ignore-mask)
         (new 'static 'pat-surface :noentity #x1 :nojak #x1 :probe #x1 :noproj #x1 :noendlessfall #x1)
         )
   (none)
   )
 
 ;; WARN: Return type mismatch sound-id vs none.
-(defmethod init-proj-settings! metalhead-grenade-shot ((obj metalhead-grenade-shot))
+(defmethod init-proj-settings! ((this metalhead-grenade-shot))
   "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
-  (set! (-> obj attack-mode) 'eco-yellow)
-  (set! (-> obj blast-radius) 4096.0)
-  (set! (-> obj max-speed) 135168.0)
-  (set! (-> obj timeout) (seconds 4))
-  (set! (-> obj update-velocity) projectile-update-velocity-add-gravity)
-  (set! (-> obj move) gren-canister-move)
-  (set! (-> obj root-override dynam gravity y) 102400.0)
-  (set! (-> obj root-override dynam gravity-length) 102400.0)
-  (set! (-> obj root-override dynam gravity-max) 102400.0)
+  (set! (-> this attack-mode) 'eco-yellow)
+  (set! (-> this blast-radius) 4096.0)
+  (set! (-> this max-speed) 135168.0)
+  (set! (-> this timeout) (seconds 4))
+  (set! (-> this update-velocity) projectile-update-velocity-add-gravity)
+  (set! (-> this move) gren-canister-move)
+  (set! (-> this root dynam gravity y) 102400.0)
+  (set! (-> this root dynam gravity-length) 102400.0)
+  (set! (-> this root dynam gravity-max) 102400.0)
   (let ((f0-5 1092.2667))
-    (quaternion-axis-angle! (-> obj tumble-quat) 1.0 0.0 0.0 f0-5)
+    (quaternion-axis-angle! (-> this tumble-quat) 1.0 0.0 0.0 f0-5)
     )
-  (set! (-> obj part) (create-launch-control (-> *part-group-id-table* 143) obj))
-  (set! (-> obj sound-id) (new-sound-id))
+  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 143) this))
+  (set! (-> this sound-id) (new-sound-id))
   (none)
   )
 

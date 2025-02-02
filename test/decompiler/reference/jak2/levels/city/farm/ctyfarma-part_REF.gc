@@ -4,23 +4,19 @@
 ;; definition of type ctyfarma-part
 (deftype ctyfarma-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type ctyfarma-part
-(defmethod inspect ctyfarma-part ((obj ctyfarma-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this ctyfarma-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -35,7 +31,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4492
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 2.5) (meters 0.1))
     (:rot-x (degrees 9))
@@ -54,7 +50,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4493
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 12) (meters 0.1))
     (:rot-x (degrees 9))
@@ -137,22 +133,8 @@
       (if (< (vector-vector-distance (camera-pos) s3-0) 204800.0)
           (sound-play "dirt-drips" :position s3-0)
           )
-      (let ((t9-5 sp-launch-particles-var)
-            (a0-7 *sp-particle-system-2d*)
-            (a1-4 (-> *part-id-table* 4495))
-            (a2-2 *launch-matrix*)
-            )
-        (set! (-> a2-2 trans quad) (-> s3-0 quad))
-        (t9-5 a0-7 a1-4 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
-      (let ((t9-6 sp-launch-particles-var)
-            (a0-8 *sp-particle-system-3d*)
-            (a1-5 (-> *part-id-table* 4496))
-            (a2-3 *launch-matrix*)
-            )
-        (set! (-> a2-3 trans quad) (-> s3-0 quad))
-        (t9-6 a0-8 a1-5 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
+      (launch-particles (-> *part-id-table* 4495) s3-0)
+      (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 4496) s3-0)
       )
     )
   (sparticle-motion-blur arg0 arg1 (the-as vector arg2))
@@ -161,7 +143,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4495
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:scale-x (meters 0.1) (meters 0.05))
     (:rot-x 4)
@@ -198,7 +180,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4496
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:y (meters 0.2))
     (:scale-x (meters 0.5) (meters 0.25))
@@ -220,7 +202,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4494
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:birth-func 'birth-func-ctyfarma-drip)
     (:num 0.05)
     (:scale-x (meters 0))
@@ -265,7 +247,7 @@
 
 ;; failed to figure out what this is:
 (defpart 4499
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.5)
     (:x (meters -0.75) (meters 1.5))
     (:z (meters -4))

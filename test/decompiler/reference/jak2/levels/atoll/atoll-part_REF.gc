@@ -4,23 +4,19 @@
 ;; definition of type atoll-part
 (deftype atoll-part (part-spawner)
   ()
-  :heap-base #x30
-  :method-count-assert 16
-  :size-assert         #xb0
-  :flag-assert         #x10003000b0
   )
 
 ;; definition for method 3 of type atoll-part
-(defmethod inspect atoll-part ((obj atoll-part))
-  (when (not obj)
-    (set! obj obj)
+(defmethod inspect ((this atoll-part))
+  (when (not this)
+    (set! this this)
     (goto cfg-4)
     )
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
   (label cfg-4)
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -32,7 +28,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1313
-  :init-specs ((:texture (new 'static 'texture-id :index #xca :page #xc))
+  :init-specs ((:texture (glow-soft effects))
     (:num 1.0)
     (:y (meters -0.15))
     (:scale-x (meters 2.5) (meters 0.1))
@@ -60,7 +56,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1314
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.15))
     (:scale-x (meters 2) (meters 0.1))
@@ -79,7 +75,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1315
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters -0.15))
     (:scale-x (meters 12) (meters 0.1))
@@ -107,7 +103,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1316
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.6)
     (:x (meters -0.025) (meters 0.05))
     (:y (meters 0.05))
@@ -145,7 +141,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1317
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0)
     (:y (meters -2.5))
     (:z (meters 0.75))
@@ -243,7 +239,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1323
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 0.25)
     (:x (meters -5) (meters 10))
     (:y (meters -4) (meters 8))
@@ -263,7 +259,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1321
-  :init-specs ((:texture (new 'static 'texture-id :index #xc9 :page #xc))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:x (meters 0) (meters 16))
     (:y (meters 0) (meters 16))
@@ -346,14 +342,14 @@
             ((< (-> s4-0 w) 0.0)
              (.lvf vf1 (&-> v1-14 qx-qy-qz-sy quad))
              (.lvf vf2 (&-> s4-0 quad))
-             (.sub.vf vf1 vf0 vf2 :mask #b111)
+             (.sub.vf.xyz vf1 vf0 vf2)
              (.svf (&-> v1-14 qx-qy-qz-sy quad) vf1)
              (.mov v1-15 vf1)
              )
             (else
               (.lvf vf1 (&-> v1-14 qx-qy-qz-sy quad))
               (.lvf vf2 (&-> s4-0 quad))
-              (.add.vf vf1 vf0 vf2 :mask #b111)
+              (.add.vf.xyz vf1 vf0 vf2)
               (.svf (&-> v1-14 qx-qy-qz-sy quad) vf1)
               (.mov v1-16 vf1)
               )
@@ -373,7 +369,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1322
-  :init-specs ((:texture (new 'static 'texture-id :page #xa3b))
+  :init-specs ((:texture (seagull-wing palcab-sprite))
     (:birth-func 'birth-func-atoll-bird-wing)
     (:num 2.0)
     (:scale-x (meters 3))
@@ -399,7 +395,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1326
-  :init-specs ((:texture (new 'static 'texture-id :index #x92 :page #xc))
+  :init-specs ((:texture (motion-blur-part effects))
     (:num 1.0)
     (:x (meters -1))
     (:y (meters 0.5) (meters 2))
@@ -426,7 +422,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1327
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0 1.0)
     (:x (meters 0))
     (:y (meters 0.75) (meters 1))
@@ -469,7 +465,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1329
-  :init-specs ((:texture (new 'static 'texture-id :page #xc))
+  :init-specs ((:texture (bigpuff effects))
     (:num 3.0 1.0)
     (:x (meters 0.25))
     (:y (meters 0) (meters 0.75))
@@ -514,7 +510,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1331
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 2.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -551,7 +547,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1332
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -590,27 +586,13 @@
 ;; INFO: Used lq/sq
 (defun check-drop-level-atoll-drop ((arg0 sparticle-system) (arg1 sparticle-cpuinfo) (arg2 matrix))
   "Ensure water drop particle effects don't go below the ocean level, render the splash"
-  (let ((f30-0 (get-height *ocean* (the-as vector (-> arg2 vector)) #t)))
+  (let ((f30-0 (get-height *ocean* (-> arg2 vector 0) #t)))
     (when (and (!= f30-0 4095996000.0) (< (-> arg2 vector 0 y) f30-0))
       (let ((s3-0 (new 'stack-no-clear 'vector)))
         (sp-kill-particle arg0 arg1)
         (set-vector! s3-0 (-> arg2 vector 0 x) f30-0 (-> arg2 vector 0 z) 1.0)
-        (let ((t9-2 sp-launch-particles-var)
-              (a0-4 *sp-particle-system-2d*)
-              (a1-3 (-> *part-id-table* 1336))
-              (a2-2 *launch-matrix*)
-              )
-          (set! (-> a2-2 trans quad) (-> s3-0 quad))
-          (t9-2 a0-4 a1-3 a2-2 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-          )
-        (let ((t9-3 sp-launch-particles-var)
-              (a0-5 *sp-particle-system-3d*)
-              (a1-4 (-> *part-id-table* 1337))
-              (a2-3 *launch-matrix*)
-              )
-          (set! (-> a2-3 trans quad) (-> s3-0 quad))
-          (t9-3 a0-5 a1-4 a2-3 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-          )
+        (launch-particles (-> *part-id-table* 1336) s3-0)
+        (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 1337) s3-0)
         )
       )
     )
@@ -620,7 +602,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1334
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -647,7 +629,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1335
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -674,7 +656,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1336
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:scale-x (meters 0.1) (meters 0.05))
     (:rot-x 4)
@@ -700,7 +682,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1337
-  :init-specs ((:texture (new 'static 'texture-id :index #x2c :page #xc))
+  :init-specs ((:texture (water-ring effects))
     (:num 1.0)
     (:y (meters 0.02))
     (:scale-x (meters 1))
@@ -730,7 +712,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1338
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:z (meters -0.25))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -813,14 +795,7 @@
     (let ((s3-0 (new 'stack-no-clear 'vector)))
       (sp-kill-particle arg0 arg1)
       (set-vector! s3-0 (-> arg2 vector 0 x) (-> arg1 user-float) (-> arg2 vector 0 z) 1.0)
-      (let ((t9-1 sp-launch-particles-var)
-            (a0-3 *sp-particle-system-2d*)
-            (a1-2 (-> *part-id-table* 1336))
-            (a2-1 *launch-matrix*)
-            )
-        (set! (-> a2-1 trans quad) (-> s3-0 quad))
-        (t9-1 a0-3 a1-2 a2-1 (the-as sparticle-launch-state #f) (the-as sparticle-launch-control #f) 1.0)
-        )
+      (launch-particles (-> *part-id-table* 1336) s3-0)
       )
     )
   (sparticle-motion-blur arg0 arg1 (the-as vector arg2))
@@ -829,7 +804,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1339
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -857,7 +832,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1340
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -885,7 +860,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1341
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -913,7 +888,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1342
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -941,7 +916,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1343
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 1.0 1.0)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -969,7 +944,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1344
-  :init-specs ((:texture (new 'static 'texture-id :index #x21 :page #xc))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 0.5)
     (:z (meters -0.5))
     (:scale-x (meters 0.1) (meters 0.1))
@@ -1004,7 +979,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1345
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:y (meters 2))
     (:scale-x (meters 24))
@@ -1031,7 +1006,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1346
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 48.5) (meters 0.1))
     (:rot-x (degrees 45))
@@ -1049,7 +1024,7 @@
 
 ;; failed to figure out what this is:
 (defpart 1347
-  :init-specs ((:texture (new 'static 'texture-id :index #xbb :page #xc))
+  :init-specs ((:texture (glow effects))
     (:num 1.0)
     (:scale-x (meters 96) (meters 0.1))
     (:rot-x (degrees 78.75))

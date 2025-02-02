@@ -4,18 +4,14 @@
 ;; definition of type training-part
 (deftype training-part (part-spawner)
   ()
-  :heap-base #x60
-  :method-count-assert 21
-  :size-assert         #xd0
-  :flag-assert         #x15006000d0
   )
 
 ;; definition for method 3 of type training-part
-(defmethod inspect training-part ((obj training-part))
+(defmethod inspect ((this training-part))
   (let ((t9-0 (method-of-type part-spawner inspect)))
-    (t9-0 obj)
+    (t9-0 this)
     )
-  obj
+  this
   )
 
 ;; failed to figure out what this is:
@@ -148,7 +144,7 @@
 
 ;; failed to figure out what this is:
 (defpart 752
-  :init-specs ((:texture (new 'static 'texture-id :index #x19 :page #x2))
+  :init-specs ((:texture (falls-particle-02 effects))
     (:num 0.2)
     (:sound (static-sound-spec "geyser" :num 0.1 :fo-min 50 :fo-max 200))
     (:x (meters 0) (meters 1))
@@ -180,7 +176,7 @@
 
 ;; failed to figure out what this is:
 (defpart 753
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 0.15)
     (:x (meters 0) (meters 1))
     (:y (meters 85) (meters 10))
@@ -227,7 +223,7 @@
 
 ;; failed to figure out what this is:
 (defpart 754
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 0.035)
     (:x (meters 0) (meters 1))
     (:y (meters 85) (meters 10))
@@ -260,7 +256,7 @@
 
 ;; failed to figure out what this is:
 (defpart 763
-  :init-specs ((:texture (new 'static 'texture-id :index #x9 :page #x2))
+  :init-specs ((:texture (lakedrop effects))
     (:num 0.0 1 1.0)
     (:scale-x (meters 0.05) (meters 0.075))
     (:scale-y :copy scale-x)
@@ -280,7 +276,7 @@
 
 ;; failed to figure out what this is:
 (defpart 764
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 1.0)
     (:y (meters 0.02))
     (:scale-x (meters 1) (meters 1))
@@ -308,22 +304,8 @@
           (sound-play "water-drop")
           )
       (set-vector! gp-0 (-> arg2 x) (-> arg1 user-float) (-> arg2 z) 1.0)
-      (sp-launch-particles-var
-        *sp-particle-system-2d*
-        (-> *part-id-table* 763)
-        gp-0
-        (the-as sparticle-launch-state #f)
-        (the-as sparticle-launch-control #f)
-        1.0
-        )
-      (sp-launch-particles-var
-        *sp-particle-system-3d*
-        (-> *part-id-table* 764)
-        gp-0
-        (the-as sparticle-launch-state #f)
-        (the-as sparticle-launch-control #f)
-        1.0
-        )
+      (launch-particles (-> *part-id-table* 763) gp-0)
+      (launch-particles :system *sp-particle-system-3d* (-> *part-id-table* 764) gp-0)
       )
     )
   (none)
@@ -331,7 +313,7 @@
 
 ;; failed to figure out what this is:
 (defpart 759
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 2.0)
     (:x (meters 0) (meters 40))
     (:y (meters 10) (meters 20))
@@ -352,7 +334,7 @@
 
 ;; failed to figure out what this is:
 (defpart 760
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 4.0)
     (:x (meters 0) (meters 40))
     (:y (meters 10) (meters 20))
@@ -371,7 +353,7 @@
 
 ;; failed to figure out what this is:
 (defpart 757
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 2.0)
     (:x (meters 0) (meters 40))
     (:y (meters 4) (meters 8))
@@ -392,7 +374,7 @@
 
 ;; failed to figure out what this is:
 (defpart 758
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 4.0)
     (:x (meters 0) (meters 40))
     (:y (meters 4) (meters 10))
@@ -411,7 +393,7 @@
 
 ;; failed to figure out what this is:
 (defpart 755
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 2.0)
     (:x (meters 0) (meters 40))
     (:y (meters 10) (meters 10))
@@ -432,7 +414,7 @@
 
 ;; failed to figure out what this is:
 (defpart 756
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 4.0)
     (:x (meters 0) (meters 40))
     (:y (meters 10) (meters 20))
@@ -630,7 +612,7 @@
 
 ;; failed to figure out what this is:
 (defpart 770
-  :init-specs ((:texture (new 'static 'texture-id :index #x3 :page #x2))
+  :init-specs ((:texture (harddot effects))
     (:num 0.5)
     (:x (meters 0))
     (:scale-x (meters 5))
@@ -648,7 +630,7 @@
 
 ;; failed to figure out what this is:
 (defpart 769
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 0.25)
     (:x (meters -2))
     (:scale-x (meters 0.25))
@@ -664,7 +646,7 @@
 
 ;; failed to figure out what this is:
 (defpart 766
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 1.0)
     (:x (meters -0.6666667))
     (:y (meters 4))
@@ -706,7 +688,7 @@
 
 ;; failed to figure out what this is:
 (defpart 768
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:scale-x (meters 0.25))
     (:scale-y :copy scale-x)
@@ -721,7 +703,7 @@
 
 ;; failed to figure out what this is:
 (defpart 765
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 1.0)
     (:x (meters -0.6666667))
     (:y (meters 4))
@@ -766,7 +748,7 @@
 
 ;; failed to figure out what this is:
 (defpart 773
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:x (meters 0) (meters 7.5))
     (:y (meters 14) (meters 3))
@@ -796,7 +778,7 @@
 
 ;; failed to figure out what this is:
 (defpart 771
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:num 1.0)
     (:x (meters 0) (meters 16))
     (:y (meters 0) (meters 16))
@@ -830,7 +812,7 @@
 
 ;; failed to figure out what this is:
 (defpart 772
-  :init-specs ((:texture (new 'static 'texture-id :index #x22 :page #x2))
+  :init-specs ((:texture (butterfly-wing effects))
     (:birth-func 'birth-func-copy-rot-color)
     (:num 2.0)
     (:scale-x (meters 0.9))
@@ -866,7 +848,7 @@
 ;; INFO: Return type mismatch int vs none.
 (defun tra-bird-bob-func ((arg0 sparticle-system) (arg1 sparticle-cpuinfo) (arg2 vector))
   (set! (-> arg2 y) (+ (-> (the-as process-drawable (-> arg1 key proc)) root trans y)
-                       (* -2048.0 (sin (* 218.45334 (the float (mod (-> *display* base-frame-counter) 300)))))
+                       (* -2048.0 (sin (* 218.45334 (the float (mod (current-time) 300)))))
                        )
         )
   0
@@ -875,7 +857,7 @@
 
 ;; failed to figure out what this is:
 (defpart 779
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:birth-func 'birth-func-random-next-time)
     (:num 1.0)
     (:x (meters -15) (meters 30))
@@ -902,7 +884,7 @@
 
 ;; failed to figure out what this is:
 (defpart 777
-  :init-specs ((:texture (new 'static 'texture-id :index #xf :page #x2))
+  :init-specs ((:texture (hotdot effects))
     (:birth-func 'birth-func-copy-omega-to-z)
     (:num 1.0)
     (:x (meters 0))
@@ -948,7 +930,7 @@
 
 ;; failed to figure out what this is:
 (defpart 778
-  :init-specs ((:texture (new 'static 'texture-id :index #x1c :page #x2))
+  :init-specs ((:texture (hummingbird-wing effects))
     (:birth-func 'birth-func-copy2-rot-color)
     (:num 2.0)
     (:scale-x (meters 4))
@@ -990,7 +972,7 @@
 
 ;; failed to figure out what this is:
 (defpart 782
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 0.9)
     (:x (meters -9) (meters 1))
     (:y (meters 47))
@@ -1019,7 +1001,7 @@
 
 ;; failed to figure out what this is:
 (defpart 783
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 0.9)
     (:x (meters -9) (meters 1))
     (:y (meters 39) (meters 5))
@@ -1048,7 +1030,7 @@
 
 ;; failed to figure out what this is:
 (defpart 784
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 1.0)
     (:x (meters -2) (meters 3))
     (:y (meters 24) (meters 6))
@@ -1076,7 +1058,7 @@
 
 ;; failed to figure out what this is:
 (defpart 785
-  :init-specs ((:texture (new 'static 'texture-id :index #x4 :page #x2))
+  :init-specs ((:texture (middot effects))
     (:num 1.0)
     (:x (meters -9) (meters 1))
     (:y (meters 47))
@@ -1103,7 +1085,7 @@
 
 ;; failed to figure out what this is:
 (defpart 786
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5 0.4)
     (:x (meters -7) (meters 3.5))
     (:y (meters 47))
@@ -1133,7 +1115,7 @@
 
 ;; failed to figure out what this is:
 (defpart 787
-  :init-specs ((:texture (new 'static 'texture-id :index #x19 :page #x2))
+  :init-specs ((:texture (falls-particle-02 effects))
     (:num 0.133)
     (:x (meters 0) (meters 6))
     (:y (meters -3.5))
@@ -1178,7 +1160,7 @@
 
 ;; failed to figure out what this is:
 (defpart 792
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 1.0)
     (:x (meters -6) (meters 1))
     (:y (meters 15.5))
@@ -1207,7 +1189,7 @@
 
 ;; failed to figure out what this is:
 (defpart 793
-  :init-specs ((:texture (new 'static 'texture-id :index #x18 :page #x2))
+  :init-specs ((:texture (falls-particle effects))
     (:num 1.4)
     (:x (meters -4) (meters 1))
     (:y (meters 15.5))
@@ -1236,7 +1218,7 @@
 
 ;; failed to figure out what this is:
 (defpart 794
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5 0.4)
     (:x (meters -6) (meters 1))
     (:y (meters 15.5))
@@ -1266,7 +1248,7 @@
 
 ;; failed to figure out what this is:
 (defpart 795
-  :init-specs ((:texture (new 'static 'texture-id :page #x2))
+  :init-specs ((:texture (bigpuff effects))
     (:num 0.5 0.4)
     (:x (meters -4) (meters 1))
     (:y (meters 15.5))
@@ -1296,7 +1278,7 @@
 
 ;; failed to figure out what this is:
 (defpart 796
-  :init-specs ((:texture (new 'static 'texture-id :index #x19 :page #x2))
+  :init-specs ((:texture (falls-particle-02 effects))
     (:num 0.133)
     (:x (meters 0) (meters 6))
     (:y (meters -3.5))
@@ -1327,7 +1309,7 @@
 
 ;; failed to figure out what this is:
 (defpart 797
-  :init-specs ((:texture (new 'static 'texture-id :index #x1e :page #x2))
+  :init-specs ((:texture (water-ring effects))
     (:num 0.05)
     (:x (meters 0) (meters 5))
     (:z (meters -8) (meters 8))
